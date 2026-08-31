@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jogos de Matemática — Unidade 1</title>
+<style>
+  :root{
+    --board:#1E3B32;
+    --board-dark:#183129;
+    --chalk:#F5F3E7;
+    --chalk-dim:#CFE0D6;
+    --frame:#6B4A34;
+    --frame-dark:#4A3324;
+    --coral:#E8635A;
+    --gold:#E8B84F;
+    --teal:#4FB3A9;
+    --font-display: "Segoe UI Rounded","SF Rounded",system-ui,-apple-system,"Trebuchet MS",sans-serif;
+    --font-body: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 20% 15%, #2a4a3f 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, #24463c 0%, transparent 40%),
+      var(--board-dark);
+    font-family:var(--font-body);
+    color:var(--chalk);
+    padding:18px;
+  }
+  .frame{
+    width:100%;
+    max-width:480px;
+    border-radius:18px;
+    padding:10px;
+    background:linear-gradient(155deg,var(--frame),var(--frame-dark));
+    box-shadow:0 18px 40px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.06);
+  }
+  .board{
+    position:relative;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255,255,255,.035) 0%, transparent 40%),
+      radial-gradient(circle at 75% 70%, rgba(255,255,255,.03) 0%, transparent 35%),
+      var(--board);
+    border-radius:12px;
+    padding:26px 20px;
+  }
+  .title{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:22px;
+    margin:0 0 4px;
+    text-align:center;
+  }
+  .title span{color:var(--gold);}
+  .subtitle{
+    text-align:center;
+    font-size:13px;
+    color:var(--chalk-dim);
+    margin:0 0 22px;
+  }
+  .list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    text-decoration:none;
+    color:var(--chalk);
+    background:rgba(245,243,231,.06);
+    border:2px solid rgba(245,243,231,.15);
+    border-radius:12px;
+    padding:14px 16px;
+    transition:transform .12s ease, border-color .12s ease;
+  }
+  .card:hover, .card:focus-visible{
+    transform:translateY(-2px);
+    border-color:var(--gold);
+  }
+  .card .icon{
+    font-size:26px;
+    width:44px;
+    height:44px;
+    flex:none;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .c1 .icon{background:rgba(232,99,90,.25);}
+  .c2 .icon{background:rgba(79,179,169,.25);}
+  .card .info{flex:1;}
+  .card .name{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:15px;
+    margin:0 0 2px;
+  }
+  .card .desc{
+    font-size:12.5px;
+    color:var(--chalk-dim);
+    margin:0;
+    line-height:1.4;
+  }
+  .card .arrow{
+    font-size:18px;
+    color:var(--gold);
+    flex:none;
+  }
+  .empty-note{
+    text-align:center;
+    font-size:12px;
+    color:rgba(245,243,231,.35);
+    margin-top:22px;
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="board">
+    <p class="title">Jogos de <span>Matemática</span></p>
+    <p class="subtitle">Unidade 1 — Conjuntos</p>
+
+    <div class="list">
+      <a class="card c1" href="caca-ao-conjunto.html">
+        <div class="icon">🎯</div>
+        <div class="info">
+          <p class="name">Caça ao Conjunto</p>
+          <p class="desc">Classifique elementos por pertinência antes que o tempo acabe.</p>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+
+      <a class="card c2" href="diagrama-de-venn.html">
+        <div class="icon">🟢</div>
+        <div class="info">
+          <p class="name">Diagrama de Venn</p>
+          <p class="desc">Arraste os elementos para a região correta de até três conjuntos.</p>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+    </div>
+
+    <p class="empty-note">mais jogos em breve</p>
+  </div>
+</div>
+
+</body>
+</html>
