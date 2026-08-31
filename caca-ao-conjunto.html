@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caça ao Conjunto</title>
+<style>
+  :root{
+    --board:#1E3B32;
+    --board-dark:#183129;
+    --chalk:#F5F3E7;
+    --chalk-dim:#CFE0D6;
+    --frame:#6B4A34;
+    --frame-dark:#4A3324;
+    --coral:#E8635A;
+    --gold:#E8B84F;
+    --teal:#4FB3A9;
+    --violet:#9B87C4;
+    --miss:#E8635A;
+    --font-display: "Segoe UI Rounded","SF Rounded",system-ui,-apple-system,"Trebuchet MS",sans-serif;
+    --font-body: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 20% 15%, #2a4a3f 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, #24463c 0%, transparent 40%),
+      var(--board-dark);
+    font-family:var(--font-body);
+    color:var(--chalk);
+    padding:18px;
+  }
+  .frame{
+    width:100%;
+    max-width:460px;
+    border-radius:18px;
+    padding:10px;
+    background:linear-gradient(155deg,var(--frame),var(--frame-dark));
+    box-shadow:0 18px 40px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.06);
+  }
+  .board{
+    position:relative;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255,255,255,.035) 0%, transparent 40%),
+      radial-gradient(circle at 75% 70%, rgba(255,255,255,.03) 0%, transparent 35%),
+      var(--board);
+    border-radius:12px;
+    padding:20px 18px 16px;
+    overflow:hidden;
+    min-height:560px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- HUD ---------- */
+  .hud{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:6px;
+  }
+  .title{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:20px;
+    letter-spacing:.3px;
+    margin:0;
+  }
+  .title span{color:var(--gold);}
+  .stats{display:flex;gap:12px;align-items:center;font-size:14px;color:var(--chalk-dim);}
+  .lives{letter-spacing:2px;font-size:16px;}
+  .score{font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--gold);}
+  .round-label{
+    text-align:center;
+    font-size:12.5px;
+    color:var(--chalk-dim);
+    margin:2px 0 14px;
+    min-height:16px;
+  }
+
+  /* ---------- Play area ---------- */
+  .stage{
+    position:relative;
+    flex:1;
+    min-height:300px;
+    border-top:2px dashed rgba(245,243,231,.18);
+    border-bottom:2px dashed rgba(245,243,231,.18);
+    margin-bottom:16px;
+  }
+  .item{
+    position:absolute;
+    left:50%;
+    top:4%;
+    transform:translateX(-50%);
+    text-align:center;
+    transition:top linear;
+  }
+  .item-face{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:40px;
+    background:rgba(245,243,231,.08);
+    border:2px solid rgba(245,243,231,.35);
+    border-radius:14px;
+    padding:10px 18px;
+    min-width:56px;
+    line-height:1;
+  }
+  .item.small .item-face{font-size:22px;padding:12px 16px;}
+  .timerbar{
+    height:5px;
+    border-radius:3px;
+    background:rgba(245,243,231,.15);
+    margin-top:8px;
+    overflow:hidden;
+  }
+  .timerbar-fill{
+    height:100%;
+    background:var(--gold);
+    width:100%;
+    transition:width linear;
+  }
+  .floor-note{
+    position:absolute;
+    bottom:2px;
+    left:0; right:0;
+    text-align:center;
+    font-size:11px;
+    color:rgba(245,243,231,.35);
+  }
+
+  /* ---------- Baskets ---------- */
+  .baskets{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+  }
+  .basket{
+    flex:1;
+    max-width:150px;
+    border:none;
+    cursor:pointer;
+    padding:0;
+    background:transparent;
+    color:var(--chalk);
+    font-family:var(--font-body);
+  }
+  .basket-shape{
+    height:64px;
+    clip-path:polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 6px;
+    font-size:13px;
+    font-weight:600;
+    line-height:1.15;
+    text-align:center;
+    border:2px dashed rgba(245,243,231,.5);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .basket:active .basket-shape{transform:scale(.95);}
+  .basket:focus-visible .basket-shape{outline:3px solid var(--chalk);outline-offset:2px;}
+  .b0 .basket-shape{background:rgba(232,99,90,.22);border-color:var(--coral);}
+  .b1 .basket-shape{background:rgba(232,184,79,.22);border-color:var(--gold);}
+  .b2 .basket-shape{background:rgba(79,179,169,.22);border-color:var(--teal);}
+  .basket-key{
+    display:block;
+    text-align:center;
+    font-size:10px;
+    color:var(--chalk-dim);
+    margin-top:3px;
+  }
+  .basket.correct .basket-shape{box-shadow:0 0 0 3px #8FD3A0, 0 0 18px rgba(143,211,160,.6);}
+  .basket.wrong .basket-shape{box-shadow:0 0 0 3px var(--miss), 0 0 18px rgba(232,99,90,.6);}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-5px);}
+    75%{transform:translateX(5px);}
+  }
+  .basket.wrong .basket-shape{animation:shake .28s ease;}
+
+  /* ---------- Overlays ---------- */
+  .overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(10,20,16,.92);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:30px 24px;
+    border-radius:12px;
+    gap:14px;
+  }
+  .overlay h2{
+    font-family:var(--font-display);
+    font-size:24px;
+    margin:0;
+  }
+  .overlay p{
+    margin:0;
+    font-size:14px;
+    color:var(--chalk-dim);
+    line-height:1.5;
+    max-width:320px;
+  }
+  .overlay .big-score{
+    font-family:var(--font-display);
+    font-size:38px;
+    font-weight:700;
+    color:var(--gold);
+  }
+  .btn{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:15px;
+    color:#1E3B32;
+    background:var(--gold);
+    border:none;
+    border-radius:10px;
+    padding:12px 26px;
+    cursor:pointer;
+    box-shadow:0 6px 0 #B98A2B;
+  }
+  .btn:active{transform:translateY(3px);box-shadow:0 3px 0 #B98A2B;}
+  .rules{
+    text-align:left;
+    font-size:13px;
+    color:var(--chalk-dim);
+    background:rgba(245,243,231,.06);
+    border-radius:10px;
+    padding:12px 16px;
+    max-width:320px;
+    line-height:1.55;
+  }
+  .rules b{color:var(--chalk);}
+  .hidden{display:none !important;}
+
+  @media (prefers-reduced-motion:reduce){
+    .item{transition:none !important;}
+    .timerbar-fill{transition:none !important;}
+    .basket.wrong .basket-shape{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="board" id="board">
+
+    <div class="hud">
+      <p class="title">Caça ao <span>Conjunto</span></p>
+      <div class="stats">
+        <span class="lives" id="lives">♥♥♥</span>
+        <span class="score">⭐ <span id="score">0</span></span>
+      </div>
+    </div>
+    <p class="round-label" id="roundLabel">&nbsp;</p>
+
+    <div class="stage" id="stage">
+      <!-- item is injected here -->
+      <p class="floor-note">chão — se chegar aqui, o item escapou</p>
+    </div>
+
+    <div class="baskets" id="baskets"><!-- injected --></div>
+
+    <!-- START -->
+    <div class="overlay" id="startOverlay">
+      <h2>Caça ao Conjunto</h2>
+      <div class="rules">
+        Cada rodada dá uma regra nova (ex: <b>pares</b> × <b>ímpares</b>). Um item cai do topo:
+        clique no conjunto certo antes que o tempo acabe. Errar ou deixar cair custa uma vida ♥.
+        Você tem 4 rodadas para provar que domina pertinência e classificação!
+      </div>
+      <button class="btn" id="startBtn">Começar a caçada</button>
+    </div>
+
+    <!-- ROUND INTRO -->
+    <div class="overlay hidden" id="roundOverlay">
+      <h2 id="roundTitle">Rodada</h2>
+      <p id="roundDesc"></p>
+      <button class="btn" id="roundBtn">Ir para os conjuntos</button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div class="overlay hidden" id="endOverlay">
+      <h2 id="endTitle">Fim de jogo</h2>
+      <p id="endDesc"></p>
+      <p class="big-score" id="finalScore">0</p>
+      <button class="btn" id="retryBtn">Jogar de novo</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- Round definitions ----------
+  // Each round: baskets (labels), pool of items with a fixed correct basket index, fall time (ms), correctToAdvance
+  const rounds = [
+    {
+      title: "Rodada 1 — Pares e Ímpares",
+      desc: "Todo número inteiro pertence a um dos dois conjuntos: pares ou ímpares.",
+      baskets: ["Números pares", "Números ímpares"],
+      fall: 4200,
+      need: 6,
+      pool: Array.from({length:30}, (_,i)=>i+1).map(n => ({label:String(n), correct: n%2===0?0:1}))
+    },
+    {
+      title: "Rodada 2 — Vogais e Consoantes",
+      desc: "Toda letra do alfabeto pertence a um dos dois conjuntos: vogal ou consoante.",
+      baskets: ["Vogais", "Consoantes"],
+      fall: 4000,
+      need: 6,
+      pool: "bcdefghijklmnopqrstuvwxzaeiou".toUpperCase().split("").map(l => ({
+        label: l, correct: "AEIOU".includes(l) ? 0 : 1
+      }))
+    },
+    {
+      title: "Rodada 3 — Múltiplos de 3 e de 4",
+      desc: "Cuidado: alguns números não são múltiplos de nenhum dos dois — vão no terceiro conjunto.",
+      baskets: ["Múltiplo de 3", "Múltiplo de 4", "Nenhum dos dois"],
+      fall: 3800,
+      need: 8,
+      pool: [
+        {label:"3",correct:0},{label:"6",correct:0},{label:"9",correct:0},{label:"15",correct:0},
+        {label:"18",correct:0},{label:"21",correct:0},{label:"27",correct:0},{label:"33",correct:0},
+        {label:"4",correct:1},{label:"8",correct:1},{label:"16",correct:1},{label:"20",correct:1},
+        {label:"28",correct:1},{label:"32",correct:1},{label:"40",correct:1},
+        {label:"1",correct:2},{label:"2",correct:2},{label:"5",correct:2},{label:"7",correct:2},
+        {label:"10",correct:2},{label:"11",correct:2},{label:"13",correct:2},{label:"14",correct:2},
+        {label:"17",correct:2},{label:"19",correct:2},{label:"22",correct:2},{label:"23",correct:2},
+        {label:"25",correct:2},{label:"26",correct:2},{label:"29",correct:2}
+      ]
+    },
+    {
+      title: "Rodada 4 — Classificando polígonos",
+      desc: "Agora o critério é o número de lados da figura.",
+      baskets: ["3 lados", "4 lados", "5 lados ou mais"],
+      fall: 3600,
+      need: 8,
+      pool: [
+        {label:"Triângulo",correct:0},
+        {label:"Quadrado",correct:1},{label:"Retângulo",correct:1},{label:"Losango",correct:1},{label:"Trapézio",correct:1},
+        {label:"Pentágono",correct:2},{label:"Hexágono",correct:2},{label:"Heptágono",correct:2},{label:"Octógono",correct:2}
+      ]
+    }
+  ];
+
+  // ---------- State ----------
+  let roundIdx = 0;
+  let score = 0;
+  let lives = 3;
+  let correctInRound = 0;
+  let currentItem = null;
+  let itemTimeout = null;
+  let answered = false;
+  let lastItemLabel = null;
+
+  // ---------- Elements ----------
+  const scoreEl = document.getElementById('score');
+  const livesEl = document.getElementById('lives');
+  const roundLabelEl = document.getElementById('roundLabel');
+  const stageEl = document.getElementById('stage');
+  const basketsEl = document.getElementById('baskets');
+  const startOverlay = document.getElementById('startOverlay');
+  const roundOverlay = document.getElementById('roundOverlay');
+  const endOverlay = document.getElementById('endOverlay');
+  const roundTitleEl = document.getElementById('roundTitle');
+  const roundDescEl = document.getElementById('roundDesc');
+  const endTitleEl = document.getElementById('endTitle');
+  const endDescEl = document.getElementById('endDesc');
+  const finalScoreEl = document.getElementById('finalScore');
+
+  function updateHUD(){
+    scoreEl.textContent = score;
+    livesEl.textContent = "♥".repeat(lives) + "♡".repeat(3-lives);
+  }
+
+  function buildBaskets(){
+    basketsEl.innerHTML = "";
+    const labels = rounds[roundIdx].baskets;
+    labels.forEach((label, i) => {
+      const btn = document.createElement('button');
+      btn.className = "basket b" + i;
+      btn.setAttribute('aria-label', label);
+      btn.innerHTML = `<div class="basket-shape">${label}</div><span class="basket-key">tecla ${i+1}</span>`;
+      btn.addEventListener('click', () => handleAnswer(i, btn));
+      basketsEl.appendChild(btn);
+    });
+  }
+
+  function pickItem(){
+    const pool = rounds[roundIdx].pool;
+    let choice;
+    do {
+      choice = pool[Math.floor(Math.random()*pool.length)];
+    } while (pool.length > 1 && choice.label === lastItemLabel);
+    lastItemLabel = choice.label;
+    return choice;
+  }
+
+  function spawnItem(){
+    answered = false;
+    const data = pickItem();
+    currentItem = data;
+
+    const el = document.createElement('div');
+    el.className = "item" + (data.label.length > 3 ? " small" : "");
+    el.innerHTML = `<div class="item-face">${data.label}</div><div class="timerbar"><div class="timerbar-fill"></div></div>`;
+    stageEl.querySelectorAll('.item').forEach(n => n.remove());
+    stageEl.appendChild(el);
+
+    const fill = el.querySelector('.timerbar-fill');
+    const fallMs = rounds[roundIdx].fall;
+
+    requestAnimationFrame(() => {
+      el.style.transitionDuration = fallMs + "ms";
+      fill.style.transitionDuration = fallMs + "ms";
+      requestAnimationFrame(() => {
+        el.style.top = "72%";
+        fill.style.width = "0%";
+      });
+    });
+
+    itemTimeout = setTimeout(() => {
+      if (!answered) miss(el);
+    }, fallMs + 40);
+  }
+
+  function flashBasket(btn, ok){
+    btn.classList.add(ok ? 'correct' : 'wrong');
+    setTimeout(() => btn.classList.remove(ok ? 'correct' : 'wrong'), 320);
+  }
+
+  function handleAnswer(idx, btn){
+    if (answered || !currentItem) return;
+    answered = true;
+    clearTimeout(itemTimeout);
+    const ok = idx === currentItem.correct;
+    flashBasket(btn, ok);
+    const el = stageEl.querySelector('.item');
+    if (el) el.remove();
+
+    if (ok){
+      score += 10;
+      correctInRound++;
+    } else {
+      loseLife();
+    }
+    updateHUD();
+    afterAnswer();
+  }
+
+  function miss(el){
+    answered = true;
+    if (el) el.remove();
+    loseLife();
+    updateHUD();
+    afterAnswer();
+  }
+
+  function loseLife(){
+    lives--;
+    if (lives <= 0){
+      setTimeout(endGame, 250);
+      return true;
+    }
+    return false;
+  }
+
+  function afterAnswer(){
+    if (lives <= 0) return;
+    if (correctInRound >= rounds[roundIdx].need){
+      setTimeout(nextRound, 400);
+    } else {
+      setTimeout(spawnItem, 550);
+    }
+  }
+
+  function startRound(){
+    correctInRound = 0;
+    lastItemLabel = null;
+    buildBaskets();
+    roundLabelEl.textContent = rounds[roundIdx].title + " · acerte " + rounds[roundIdx].need;
+    spawnItem();
+  }
+
+  function nextRound(){
+    roundIdx++;
+    if (roundIdx >= rounds.length){
+      endGame(true);
+      return;
+    }
+    roundTitleEl.textContent = rounds[roundIdx].title;
+    roundDescEl.textContent = rounds[roundIdx].desc;
+    roundOverlay.classList.remove('hidden');
+  }
+
+  function endGame(won){
+    stageEl.querySelectorAll('.item').forEach(n => n.remove());
+    if (won){
+      endTitleEl.textContent = "Você dominou os conjuntos! 🎉";
+      endDescEl.textContent = "As quatro rodadas foram concluídas com sucesso.";
+    } else {
+      endTitleEl.textContent = "Fim de jogo";
+      endDescEl.textContent = "As vidas acabaram. Bora tentar de novo?";
+    }
+    finalScoreEl.textContent = score;
+    endOverlay.classList.remove('hidden');
+  }
+
+  function resetGame(){
+    roundIdx = 0;
+    score = 0;
+    lives = 3;
+    updateHUD();
+    endOverlay.classList.add('hidden');
+    roundTitleEl.textContent = rounds[0].title;
+    roundDescEl.textContent = rounds[0].desc;
+    roundOverlay.classList.remove('hidden');
+  }
+
+  // keyboard shortcuts 1/2/3
+  window.addEventListener('keydown', (e) => {
+    if (["1","2","3"].includes(e.key)){
+      const idx = parseInt(e.key,10) - 1;
+      const btn = basketsEl.children[idx];
+      if (btn) handleAnswer(idx, btn);
+    }
+  });
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    startOverlay.classList.add('hidden');
+    roundTitleEl.textContent = rounds[0].title;
+    roundDescEl.textContent = rounds[0].desc;
+    roundOverlay.classList.remove('hidden');
+  });
+
+  document.getElementById('roundBtn').addEventListener('click', () => {
+    roundOverlay.classList.add('hidden');
+    startRound();
+  });
+
+  document.getElementById('retryBtn').addEventListener('click', resetGame);
+
+  updateHUD();
+})();
+</script>
+
+</body>
+</html>
