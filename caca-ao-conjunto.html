@@ -112,6 +112,18 @@
   @keyframes gasCollapse{0%{transform:scale(1.5);opacity:.9;filter:blur(7px)}70%{transform:scale(.45);opacity:.7;filter:blur(3px)}100%{transform:scale(.05);opacity:0;filter:blur(0)}}
   @keyframes starForm{0%,55%{opacity:0;transform:scale(.2) rotate(-45deg)}75%{opacity:1;transform:scale(1.35) rotate(8deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
   @keyframes gasDrift{0%,100%{transform:scale(1.15) translateY(0)}50%{transform:scale(1.05) translateY(-2px)}}
+
+  .gas-pill{display:inline-flex;align-items:center;gap:6px}
+  .gas-icon{position:relative;width:20px;height:20px;flex:none}
+  .gas-icon .cloud{position:absolute;inset:-5px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#ff9fd0,#ff5fa2 40%,#8b5cf6 70%,transparent 80%);
+    filter:blur(3px);opacity:.85;transform:scale(.5);transition:transform .25s ease,opacity .3s}
+  .gas-icon .star{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;
+    opacity:0;transform:scale(.2) rotate(-45deg);transition:opacity .3s}
+  .gas-icon.pop .cloud{animation:gasPopSm .8s ease-in forwards}
+  .gas-icon.pop .star{animation:starPopSm .8s ease-in forwards}
+  @keyframes gasPopSm{0%{transform:scale(1.3);opacity:.9;filter:blur(4px)}70%{transform:scale(.4);opacity:.6;filter:blur(2px)}100%{transform:scale(.05);opacity:0;filter:blur(0)}}
+  @keyframes starPopSm{0%,55%{opacity:0;transform:scale(.2) rotate(-45deg)}75%{opacity:1;transform:scale(1.3) rotate(8deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
   .score-big{font-size:40px;font-weight:700;color:var(--yellow)}
   .record{color:var(--green);font-weight:600;margin-bottom:14px}
   .acc{color:var(--muted);font-weight:600;margin-bottom:10px;font-size:15px}
@@ -129,7 +141,10 @@
     <button class="icon-btn" id="exitBtn" title="Sair">🚪</button>
     <div class="mid">
       <span class="pill lives" id="lives"></span>
-      <span class="pill">⭐ <span id="score">0</span></span>
+      <span class="pill gas-pill">
+        <span class="gas-icon" id="gasIcon"><span class="cloud"></span><span class="star">⭐</span></span>
+        <span id="score">0</span>
+      </span>
       <span class="pill">✅ <span id="hits">0</span></span>
     </div>
     <button class="icon-btn" id="pauseBtn" title="Pausar">⏸️</button>
@@ -257,7 +272,8 @@
     ok(){ beep(784,.1,'triangle'); beep(1046,.15,'triangle',.14,.08); },
     bad(){ beep(220,.25,'sawtooth',.08); beep(160,.3,'sawtooth',.08,.1); },
     win(){ [523,659,784,1046,1318].forEach((f,i) => beep(f,.18,'triangle',.13,i*.1)); },
-    lose(){ [392,330,262,196].forEach((f,i) => beep(f,.25,'triangle',.12,i*.15)); }
+    lose(){ [392,330,262,196].forEach((f,i) => beep(f,.25,'triangle',.12,i*.15)); },
+    star(){ beep(1318,.15,'sine',.13); beep(1568,.18,'sine',.1,.08); }
   };
   const soundBtn = $('soundBtn');
   const paintSound = () => soundBtn.textContent = soundOn ? '🔊' : '🔇';
@@ -321,14 +337,29 @@
 
   // ---------- Estado ----------
   let rIdx = 0, lives = 3, score = 0, combo = 0, done = 0, gen = null;
-  let hits = 0, tries = 0;
+  let hits = 0, tries = 0, gasStars = 0;
   let current = null, y = 0, elapsed = 0, last = 0, running = false, paused = false, raf = 0, busy = false;
   const arena = $('arena');
+  const GAS_MS = 50; // pontos para o gás condensar numa estrela
+
+  function paintGas(){
+    const icon = $('gasIcon');
+    if (icon.classList.contains('pop')) return;
+    const frac = (score % GAS_MS) / GAS_MS;
+    icon.querySelector('.cloud').style.transform = `scale(${(.5 + frac * .8).toFixed(2)})`;
+  }
+  function popGas(){
+    const icon = $('gasIcon');
+    sfx.star();
+    icon.classList.remove('pop'); void icon.offsetWidth; icon.classList.add('pop');
+    setTimeout(() => { icon.classList.remove('pop'); paintGas(); }, 850);
+  }
 
   function paintHUD(){
     $('lives').innerHTML = [0,1,2].map(i => `<span class="${i < lives ? '' : 'lost'}">❤️</span>`).join('');
     $('hits').textContent = hits;
     $('score').textContent = score;
+    paintGas();
   }
   function paintRound(){
     const R = ROUNDS[rIdx];
@@ -404,6 +435,8 @@
       const bonus = Math.round(5 * (1 - elapsed / current.dur));
       const pts = 10 + bonus + (combo >= 3 ? 5 : 0);
       score += pts; sfx.ok();
+      const newGasStars = Math.floor(score / GAS_MS);
+      if (newGasStars > gasStars){ gasStars = newGasStars; popGas(); }
       floatText('+' + pts, '#4ef0a0', c.x, c.y - 30);
       const portal = side === 0 ? $('portalA') : $('portalB');
       portal.classList.remove('flash-ok'); void portal.offsetWidth; portal.classList.add('flash-ok');
@@ -464,7 +497,8 @@
   function stop(){ running = false; cancelAnimationFrame(raf); }
 
   function resetGame(){
-    stop(); rIdx = 0; lives = 3; score = 0; combo = 0; hits = 0; tries = 0; current = null;
+    stop(); rIdx = 0; lives = 3; score = 0; combo = 0; hits = 0; tries = 0; gasStars = 0; current = null;
+    $('gasIcon').classList.remove('pop');
     arena.querySelectorAll('.meteor,.toast,.combo').forEach(e => e.remove());
     paintHUD(); paintCombo();
     ['endOv','pauseOv','exitOv'].forEach(id => $(id).classList.add('hidden'));
