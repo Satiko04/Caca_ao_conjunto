@@ -34,7 +34,7 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 - Barra de XP mostrando progresso até a próxima patente.
 - Contador de estrelas totais (`⭐ totalStars`).
 - Card de cada jogo (`caca`, `venn`) com: estrelas conquistadas (0–3), recorde de pontos, selo **NOVO** quando ainda não jogado, e link para o jogo.
-- Dois planetas **bloqueados** (Frações/Porcentagens, Decimais/Probabilidade, Plano Cartesiano) reservados para conteúdo futuro.
+- Sete planetas **bloqueados** da "Expedição Galáctica" (Místico — frações, Oceano — decimais, Jurássico — tabelas e gráficos, Máquina — fluxogramas, Carga da Nave — volume, Doce — massa, Extremos — temperatura), reservados para conteúdo futuro.
 - Botão de som (liga/desliga efeitos sonoros, salvo em `mq_sound`).
 - Botão **Sair** (`exitBtn`) → modal de confirmação → apaga `mq_player` e volta à tela de boas-vindas (troca de jogador).
 - Atualiza o mapa automaticamente ao voltar de um jogo pelo botão "voltar" do navegador (`pageshow`).
