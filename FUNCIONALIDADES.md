@@ -77,8 +77,9 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 - Pontuação: 10 pontos base + bônus por rapidez + 5 pontos extra em combo (3+ acertos seguidos).
 - Combo zera ao errar; vidas (❤️❤️❤️) diminuem a cada erro ou meteoro perdido.
 - Pontinhos (`dots`) mostram acerto/erro de cada item da rodada.
+- Contador **✅ acertos** no HUD, somado durante toda a partida (não zera entre rodadas).
 - Pausa automática ao trocar de aba (`visibilitychange`) e manual (botão ⏸️ ou tecla `P`/`Esc`).
-- Ao final: 3 estrelas (venceu com todas as vidas), 2 (venceu com menos vidas), 1 (perdeu depois da 3ª rodada), 0 (perdeu antes). Recorde e estrelas são salvos por jogador.
+- Ao final: 3 estrelas (venceu com todas as vidas), 2 (venceu com menos vidas), 1 (perdeu depois da 3ª rodada), 0 (perdeu antes). Recorde e estrelas são salvos por jogador. A tela de fim também mostra o **aproveitamento** (acertos de X tentativas, em %).
 - Confete e som de vitória ao concluir as 4 rodadas.
 
 ### Funções JavaScript principais
@@ -120,7 +121,7 @@ Mesmo padrão do jogo 1: **Início**, **Rodada** (com botão **🗺️ Mapa** ad
 - Acerto: fixa o elemento no diagrama (com animação), soma pontos (10 + bônus de combo) e avança o progresso.
 - Erro: o elemento treme, mostra uma explicação (`explain`) do porquê está errado, perde uma vida e zera o combo.
 - Botão **💡 Dica** — seleciona um elemento e mostra as perguntas-guia dos conjuntos.
-- Vidas, pausa, som e telas de fim seguem o mesmo esquema do jogo 1 (3/2/1/0 estrelas, recorde salvo por jogador).
+- Vidas, pausa, som e telas de fim seguem o mesmo esquema do jogo 1 (3/2/1/0 estrelas, recorde salvo por jogador), incluindo o contador **✅ acertos** no HUD e o aproveitamento (%) na tela final.
 
 ### Funções JavaScript principais
 
@@ -148,4 +149,7 @@ Mesmo padrão do jogo 1: **Início**, **Rodada** (com botão **🗺️ Mapa** ad
 - **Fluxo de telas**: Início → Rodada → Jogo → (Pausa | Sair) → Fim.
 - **Navegação para o mapa**: botão **🗺️ Mapa** disponível na tela inicial, na tela de rodada e na tela de fim de cada jogo.
 - **Vidas, pontuação e combo**: 3 vidas por partida, combo de 3+ acertos seguidos dá bônus de pontos.
+- **Acompanhamento de acertos**: contador ✅ no HUD durante o jogo e resumo de aproveitamento (acertos/tentativas em %) na tela final.
+- **Feedback imediato**: som, texto flutuante, toast explicativo e animação (flash no portal, tremida no elemento) a cada resposta certa ou errada.
+- **Tentar novamente**: botão "🔄 Reiniciar" na pausa e "Jogar de novo 🔄" na tela de fim, sempre reiniciando pontuação, vidas e acertos do zero.
 - **Estrelas de resultado**: 0 a 3 por partida, sempre salvando o melhor resultado (recorde) por jogador em `mq_progress`.

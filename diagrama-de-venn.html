@@ -82,6 +82,7 @@
   @keyframes starIn{from{transform:scale(0) rotate(-90deg)}}
   .score-big{font-size:40px;font-weight:700;color:var(--yellow)}
   .record{color:var(--green);font-weight:600;margin-bottom:14px}
+  .acc{color:var(--muted);font-weight:600;margin-bottom:10px;font-size:15px}
   .confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:60;pointer-events:none;animation:fall linear forwards}
   @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 </style>
@@ -95,6 +96,7 @@
     <div class="mid">
       <span class="pill lives" id="lives"></span>
       <span class="pill">⭐ <span id="score">0</span></span>
+      <span class="pill">✅ <span id="hits">0</span></span>
       <span class="pill combo-pill hidden" id="combo"></span>
     </div>
     <button class="icon-btn" id="pauseBtn" title="Pausar">⏸️</button>
@@ -181,6 +183,7 @@
     <div class="end-stars" id="endStars"></div>
     <div class="score-big"><span id="finalScore">0</span> pontos</div>
     <div class="record" id="record"></div>
+    <div class="acc" id="accuracy"></div>
     <p id="endDesc"></p>
     <div class="actions">
       <button class="btn ghost" id="mapBtn">🗺️ Mapa</button>
@@ -288,11 +291,13 @@
 
   // ---------- Estado ----------
   let rIdx = 0, lives = 3, score = 0, combo = 0, placed = 0, items = [], selected = null, paused = false, playing = false;
+  let hits = 0, tries = 0;
   const svg = $('venn'), tray = $('tray'), board = $('board');
 
   function paintHUD(){
     $('lives').innerHTML = [0,1,2].map(i => `<span class="${i < lives ? '' : 'lost'}">❤️</span>`).join('');
     $('score').textContent = score;
+    $('hits').textContent = hits;
     $('prog').textContent = `${placed}/${items.length || 8}`;
   }
 
@@ -414,7 +419,7 @@
   }
 
   function correct(chip, it, p){
-    combo++;
+    hits++; tries++; combo++;
     const pts = 10 + (combo >= 3 ? 5 : 0);
     score += pts; placed++; sfx.ok();
     chip.remove();
@@ -438,7 +443,7 @@
   }
 
   function wrong(chip, it){
-    combo = 0; lives--; sfx.bad();
+    tries++; combo = 0; lives--; sfx.bad();
     chip.classList.remove('wrong'); void chip.offsetWidth; chip.classList.add('wrong');
     toast('Ops! ' + explain(it));
     paintHUD(); paintCombo();
@@ -476,7 +481,7 @@
     playing = true; paused = false;
   }
   function resetGame(){
-    rIdx = 0; lives = 3; score = 0; combo = 0; items = []; placed = 0; playing = false; paused = false;
+    rIdx = 0; lives = 3; score = 0; combo = 0; hits = 0; tries = 0; items = []; placed = 0; playing = false; paused = false;
     ['endOv','pauseOv','exitOv'].forEach(id => $(id).classList.add('hidden'));
     paintHUD(); paintCombo(); showRoundIntro();
   }
@@ -525,6 +530,8 @@
     $('endStars').innerHTML = [0,1,2].map(i => `<span class="${i < stars ? '' : 'off'}" style="animation-delay:${.2 + i * .25}s">⭐</span>`).join('');
     $('finalScore').textContent = score;
     $('record').textContent = isRecord && score > 0 ? '🎉 Novo recorde!' : '';
+    const pct = tries ? Math.round(hits / tries * 100) : 0;
+    $('accuracy').textContent = `✅ ${hits} de ${tries} acertos (${pct}%)`;
     $('endOv').classList.remove('hidden');
     if (won){ sfx.win(); confetti(); } else sfx.lose();
   }
