@@ -269,7 +269,9 @@
     // progresso separado por jogador
     const all = store.get('mq_progress', {});
     const prog = all[player.name.toLowerCase()] || {};
-    let total = 0;
+    const gasBank = store.get('mq_gas', {});
+    const gasMine = gasBank[player.name.toLowerCase()] || { gas:0, stars:0 };
+    let total = gasMine.stars || 0;
     document.querySelectorAll('[data-game]').forEach(card => {
       const r = prog[card.dataset.game] || {best:0, stars:0};
       total += r.stars || 0;
@@ -285,7 +287,7 @@
     let rank = RANKS[0], next = RANKS[1];
     RANKS.forEach((r, i) => { if (total >= r.min){ rank = r; next = RANKS[i+1] || null; } });
     document.getElementById('meRank').textContent = rank.name;
-    document.getElementById('xpFill').style.width = Math.round(total / max * 100) + '%';
+    document.getElementById('xpFill').style.width = Math.min(100, Math.round(total / max * 100)) + '%';
     document.getElementById('xpText').textContent = next
       ? `Faltam ${next.min - total} ⭐ para virar ${next.name}`
       : 'Você chegou ao topo da galáxia! 🏆';

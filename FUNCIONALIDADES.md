@@ -19,6 +19,7 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 | `mq_player` | `{ name, avatar }` do jogador atual |
 | `mq_sound` | `true`/`false` — som ligado/desligado |
 | `mq_progress` | `{ [nomeEmMinúsculo]: { [gameId]: { best, stars } } }` — recorde e estrelas por jogador e por jogo |
+| `mq_gas` | `{ [nomeEmMinúsculo]: { gas, stars } }` — banco de gás acumulado (compartilhado entre os dois jogos) e quantas estrelas já foram trocadas por esse jogador |
 
 ---
 
@@ -32,7 +33,7 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 ### Mapa de planetas
 - Cabeçalho com avatar, nome e **patente** calculada a partir do total de estrelas (`RANKS`: Cadete Espacial → Explorador(a) Estelar → Piloto Galáctico → Comandante do Universo).
 - Barra de XP mostrando progresso até a próxima patente.
-- Contador de estrelas totais (`⭐ totalStars`).
+- Contador de estrelas totais (`⭐ totalStars`) — soma as estrelas de desempenho dos jogos **e** as estrelas trocadas por gás (`mq_gas[jogador].stars`).
 - Card de cada jogo (`caca`, `venn`) com: estrelas conquistadas (0–3), recorde de pontos, selo **NOVO** quando ainda não jogado, e link para o jogo.
 - Sete planetas **bloqueados** da "Expedição Galáctica" (Místico — frações, Oceano — decimais, Jurássico — tabelas e gráficos, Máquina — fluxogramas, Carga da Nave — volume, Doce — massa, Extremos — temperatura), reservados para conteúdo futuro.
 - Botão de som (liga/desliga efeitos sonoros, salvo em `mq_sound`).
@@ -75,7 +76,7 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 - Velocidade de queda por rodada (`time`); se o meteoro chegar ao chão sem resposta, conta como erro.
 - Resposta pelos **portais A/B** (clique/toque) ou teclas **← / →**.
 - Pontuação: 10 pontos base + bônus por rapidez + 5 pontos extra em combo (3+ acertos seguidos).
-- No lugar do ícone fixo de estrela, o pill de pontuação mostra uma **nuvem de gás** que cresce a cada acerto; a cada 50 pontos ela se condensa numa ⭐ (com som e animação) e reinicia para juntar a próxima.
+- No lugar do ícone fixo de estrela, o pill de pontuação mostra uma **nuvem de gás** que cresce conforme o banco acumulado se aproxima de 5000 (veja "Gás e estrelas trocáveis" abaixo).
 - Combo zera ao errar; vidas (❤️❤️❤️) diminuem a cada erro ou meteoro perdido.
 - Pontinhos (`dots`) mostram acerto/erro de cada item da rodada.
 - Contador **✅ acertos** no HUD, somado durante toda a partida (não zera entre rodadas).
@@ -122,7 +123,7 @@ Mesmo padrão do jogo 1: **Início**, **Rodada** (com botão **🗺️ Mapa** ad
 - Acerto: fixa o elemento no diagrama (com animação), soma pontos (10 + bônus de combo) e avança o progresso.
 - Erro: o elemento treme, mostra uma explicação (`explain`) do porquê está errado, perde uma vida e zera o combo.
 - Botão **💡 Dica** — seleciona um elemento e mostra as perguntas-guia dos conjuntos.
-- Vidas, pausa, som e telas de fim seguem o mesmo esquema do jogo 1 (3/2/1/0 estrelas, recorde salvo por jogador), incluindo o contador **✅ acertos** no HUD, o aproveitamento (%) na tela final e o medidor de **gás que vira estrela** a cada 50 pontos.
+- Vidas, pausa, som e telas de fim seguem o mesmo esquema do jogo 1 (3/2/1/0 estrelas, recorde salvo por jogador), incluindo o contador **✅ acertos** no HUD, o aproveitamento (%) na tela final e o banco de **gás trocável por estrela**.
 
 ### Funções JavaScript principais
 
@@ -150,8 +151,16 @@ Mesmo padrão do jogo 1: **Início**, **Rodada** (com botão **🗺️ Mapa** ad
 - **Fluxo de telas**: Início → Rodada → Jogo → (Pausa | Sair) → Fim.
 - **Navegação para o mapa**: botão **🗺️ Mapa** disponível na tela inicial, na tela de rodada e na tela de fim de cada jogo.
 - **Vidas, pontuação e combo**: 3 vidas por partida, combo de 3+ acertos seguidos dá bônus de pontos.
-- **Gás que vira estrela**: o pill de pontuação do HUD mostra uma nuvem de gás que cresce a cada acerto; a cada 50 pontos ela se condensa numa ⭐ (som + animação) e reinicia, reaproveitando a mesma animação da tela final.
 - **Acompanhamento de acertos**: contador ✅ no HUD durante o jogo e resumo de aproveitamento (acertos/tentativas em %) na tela final.
 - **Feedback imediato**: som, texto flutuante, toast explicativo e animação (flash no portal, tremida no elemento) a cada resposta certa ou errada.
-- **Tentar novamente**: botão "🔄 Reiniciar" na pausa e "Jogar de novo 🔄" na tela de fim, sempre reiniciando pontuação, vidas e acertos do zero.
-- **Estrelas de resultado**: 0 a 3 por partida, sempre salvando o melhor resultado (recorde) por jogador em `mq_progress`. Na tela final, cada estrela aparece primeiro como uma **nuvem de gás** colorida (nebulosa) que se condensa e "acende" virando a estrela ⭐; as estrelas não conquistadas ficam como uma nuvem esmaecida, sem se formar. A contagem (critérios de 0 a 3) não mudou — só a forma como o resultado é revelado.
+- **Tentar novamente**: botão "🔄 Reiniciar" na pausa e "Jogar de novo 🔄" na tela de fim, sempre reiniciando pontuação, vidas e acertos do zero (o banco de gás **não** é afetado — veja abaixo).
+- **Estrelas de resultado**: 0 a 3 por partida, sempre salvando o melhor resultado (recorde) por jogador em `mq_progress`.
+
+### Gás e estrelas trocáveis
+
+Cada ponto ganho em qualquer um dos dois jogos também é somado a um **banco de gás persistente**, guardado por jogador (`mq_gas`, chave = nome em minúsculo, compartilhado entre Caça ao Conjunto e Diagrama de Venn).
+
+- **Nunca se perde**: diferente da pontuação da partida (que zera se você sair ou reiniciar), o gás é gravado no `localStorage` a cada acerto (`addGas(pts)`), então sair no meio de uma partida não desconta nada do banco.
+- **Visual**: o pill de pontuação do HUD mostra uma nuvem que cresce conforme o banco se aproxima de 5000; o botão **➕** ao lado fica destacado (pulsando em amarelo) quando o jogador já tem gás suficiente.
+- **Troca manual**: clicar no ➕ abre a tela "Trocar gás por estrela", com uma barra de progresso até 5000. O botão **Trocar por ⭐** só fica ativo com 5000+ de gás; cada troca desconta 5000 do banco, soma 1 à contagem de estrelas trocadas (`mq_gas[jogador].stars`) e dispara a mesma animação/som de "gás virando estrela".
+- **Reflexo no mapa**: as estrelas trocadas entram na soma do **⭐ totalStars** do mapa (`index.html`), juntando-se às estrelas de desempenho de cada jogo para calcular a patente e a barra de XP. Na tela final, cada estrela aparece primeiro como uma **nuvem de gás** colorida (nebulosa) que se condensa e "acende" virando a estrela ⭐; as estrelas não conquistadas ficam como uma nuvem esmaecida, sem se formar. A contagem (critérios de 0 a 3) não mudou — só a forma como o resultado é revelado.
