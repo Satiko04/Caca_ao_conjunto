@@ -97,10 +97,21 @@
   .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c79a12}
   .btn.ghost{background:rgba(255,255,255,.1);color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.35);border:1px solid var(--line)}
   .btn.danger{background:linear-gradient(180deg,#ff7b93,var(--red));color:#fff;box-shadow:0 6px 0 #a3203a}
-  .end-stars{font-size:52px;letter-spacing:4px;margin:4px 0 6px}
-  .end-stars span{display:inline-block;animation:starIn .5s both}
-  .end-stars .off{filter:grayscale(1);opacity:.25}
-  @keyframes starIn{from{transform:scale(0) rotate(-90deg)}}
+  .end-stars{display:flex;gap:8px;justify-content:center;margin:6px 0 10px}
+  .star-slot{position:relative;width:54px;height:54px;display:inline-flex;align-items:center;justify-content:center}
+  .star-slot .gas{position:absolute;inset:-8px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#ff9fd0,#ff5fa2 40%,#8b5cf6 70%,transparent 82%);
+    filter:blur(7px);opacity:.9;transform:scale(1.5)}
+  .star-slot .core{position:relative;font-size:30px;opacity:0;transform:scale(.2) rotate(-45deg);
+    filter:drop-shadow(0 0 8px rgba(255,210,63,.9))}
+  .star-slot.earn .gas{animation:gasCollapse 1s ease-in both}
+  .star-slot.earn .core{animation:starForm 1s ease-in both}
+  .star-slot.dim .gas{background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.3),rgba(255,255,255,.08) 55%,transparent 78%);
+    filter:blur(6px) grayscale(1);opacity:.35;transform:scale(1.15);animation:gasDrift 3s ease-in-out infinite}
+  .star-slot.dim .core{display:none}
+  @keyframes gasCollapse{0%{transform:scale(1.5);opacity:.9;filter:blur(7px)}70%{transform:scale(.45);opacity:.7;filter:blur(3px)}100%{transform:scale(.05);opacity:0;filter:blur(0)}}
+  @keyframes starForm{0%,55%{opacity:0;transform:scale(.2) rotate(-45deg)}75%{opacity:1;transform:scale(1.35) rotate(8deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+  @keyframes gasDrift{0%,100%{transform:scale(1.15) translateY(0)}50%{transform:scale(1.05) translateY(-2px)}}
   .score-big{font-size:40px;font-weight:700;color:var(--yellow)}
   .record{color:var(--green);font-weight:600;margin-bottom:14px}
   .acc{color:var(--muted);font-weight:600;margin-bottom:10px;font-size:15px}
@@ -499,7 +510,10 @@
     $('endDesc').textContent = won
       ? 'Você classificou todos os meteoros das 4 rodadas. Mandou bem!'
       : 'Suas vidas acabaram, mas cada tentativa te deixa mais forte. Bora de novo?';
-    $('endStars').innerHTML = [0,1,2].map(i => `<span class="${i < stars ? '' : 'off'}" style="animation-delay:${.2 + i * .25}s">⭐</span>`).join('');
+    $('endStars').innerHTML = [0,1,2].map(i => {
+      const earned = i < stars, delay = (.2 + i * .3) + 's';
+      return `<span class="star-slot ${earned ? 'earn' : 'dim'}"><span class="gas" style="animation-delay:${delay}"></span><span class="core" style="animation-delay:${delay}">⭐</span></span>`;
+    }).join('');
     $('finalScore').textContent = score;
     $('record').textContent = isRecord && score > 0 ? '🎉 Novo recorde!' : '';
     const pct = tries ? Math.round(hits / tries * 100) : 0;

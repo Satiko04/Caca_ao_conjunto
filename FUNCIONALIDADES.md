@@ -152,4 +152,4 @@ Mesmo padrão do jogo 1: **Início**, **Rodada** (com botão **🗺️ Mapa** ad
 - **Acompanhamento de acertos**: contador ✅ no HUD durante o jogo e resumo de aproveitamento (acertos/tentativas em %) na tela final.
 - **Feedback imediato**: som, texto flutuante, toast explicativo e animação (flash no portal, tremida no elemento) a cada resposta certa ou errada.
 - **Tentar novamente**: botão "🔄 Reiniciar" na pausa e "Jogar de novo 🔄" na tela de fim, sempre reiniciando pontuação, vidas e acertos do zero.
-- **Estrelas de resultado**: 0 a 3 por partida, sempre salvando o melhor resultado (recorde) por jogador em `mq_progress`.
+- **Estrelas de resultado**: 0 a 3 por partida, sempre salvando o melhor resultado (recorde) por jogador em `mq_progress`. Na tela final, cada estrela aparece primeiro como uma **nuvem de gás** colorida (nebulosa) que se condensa e "acende" virando a estrela ⭐; as estrelas não conquistadas ficam como uma nuvem esmaecida, sem se formar. A contagem (critérios de 0 a 3) não mudou — só a forma como o resultado é revelado.
