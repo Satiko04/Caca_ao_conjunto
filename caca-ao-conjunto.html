@@ -165,7 +165,10 @@
     <h2 id="rTitle">Rodada 1</h2>
     <p id="rDesc"></p>
     <div class="sets-preview" id="rSets"></div>
-    <div class="actions"><button class="btn" id="goBtn">Estou pronto(a)! ▶</button></div>
+    <div class="actions">
+      <button class="btn ghost" id="backBtn1">🗺️ Mapa</button>
+      <button class="btn" id="goBtn">Estou pronto(a)! ▶</button>
+    </div>
   </div>
 </div>
 
@@ -510,7 +513,7 @@
   $('startBtn').onclick = () => { sfx.click(); $('startOv').classList.add('hidden'); showRoundIntro(); };
   $('goBtn').onclick = () => { sfx.click(); startRound(); };
   $('againBtn').onclick = () => { sfx.click(); resetGame(); };
-  $('mapBtn').onclick = $('backBtn0').onclick = () => { location.href = 'index.html'; };
+  $('mapBtn').onclick = $('backBtn0').onclick = $('backBtn1').onclick = () => { location.href = 'index.html'; };
 
   if (player) $('hello').textContent = `${player.avatar} ${player.name}, uma chuva de meteoros vem aí!`;
   paintHUD(); paintRound();
