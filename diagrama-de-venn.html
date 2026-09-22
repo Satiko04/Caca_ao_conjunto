@@ -2,542 +2,539 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Diagrama de Venn Interativo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Diagrama de Venn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --board:#1E3B32;
-    --board-dark:#183129;
-    --chalk:#F5F3E7;
-    --chalk-dim:#CFE0D6;
-    --frame:#6B4A34;
-    --frame-dark:#4A3324;
-    --coral:#E8635A;
-    --gold:#E8B84F;
-    --teal:#4FB3A9;
-    --miss:#E8635A;
-    --good:#8FD3A0;
-    --font-display: "Segoe UI Rounded","SF Rounded",system-ui,-apple-system,"Trebuchet MS",sans-serif;
-    --font-body: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --bg1:#0b0730; --bg2:#1d1060; --ink:#fff; --muted:#bdb6ee;
+    --pink:#ff5fa2; --cyan:#35e0ff; --yellow:#ffd23f; --green:#4ef0a0; --purple:#8b5cf6; --red:#ff4d6d;
+    --card:rgba(255,255,255,.08); --line:rgba(255,255,255,.16);
+    --font:"Fredoka","Segoe UI Rounded","Trebuchet MS",system-ui,sans-serif;
   }
-  *{box-sizing:border-box;}
-  html,body{height:100%;}
-  body{
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:
-      radial-gradient(circle at 20% 15%, #2a4a3f 0%, transparent 45%),
-      radial-gradient(circle at 85% 80%, #24463c 0%, transparent 40%),
-      var(--board-dark);
-    font-family:var(--font-body);
-    color:var(--chalk);
-    padding:18px;
-    touch-action:manipulation;
-  }
-  .frame{
-    width:100%;
-    max-width:480px;
-    border-radius:18px;
-    padding:10px;
-    background:linear-gradient(155deg,var(--frame),var(--frame-dark));
-    box-shadow:0 18px 40px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.06);
-  }
-  .board{
-    position:relative;
-    background:
-      radial-gradient(circle at 30% 20%, rgba(255,255,255,.035) 0%, transparent 40%),
-      radial-gradient(circle at 75% 70%, rgba(255,255,255,.03) 0%, transparent 35%),
-      var(--board);
-    border-radius:12px;
-    padding:18px 16px 16px;
-    overflow:hidden;
-    min-height:600px;
-    display:flex;
-    flex-direction:column;
-  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{background:#140b45}
+  html,body{margin:0;min-height:100%}
+  body{font-family:var(--font);color:var(--ink);min-height:100vh;
+    background:radial-gradient(ellipse at 20% 0%,#3a1c8f 0%,transparent 55%),radial-gradient(ellipse at 90% 100%,#0f4c7a 0%,transparent 50%),linear-gradient(180deg,var(--bg1),var(--bg2));
+    background-attachment:fixed;user-select:none;-webkit-user-select:none}
+  #stars{position:fixed;inset:0;pointer-events:none}
+  .star{position:absolute;background:#fff;border-radius:50%;animation:tw 3s infinite ease-in-out}
+  @keyframes tw{0%,100%{opacity:.25}50%{opacity:1}}
+  button{font-family:inherit;cursor:pointer}
+  .hidden{display:none!important}
 
-  /* ---------- HUD ---------- */
-  .hud{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
-  .title{font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:.3px;margin:0;}
-  .title span{color:var(--gold);}
-  .stats{display:flex;gap:12px;align-items:center;font-size:14px;color:var(--chalk-dim);}
-  .lives{letter-spacing:2px;font-size:16px;}
-  .score{font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--gold);}
-  .round-label{text-align:center;font-size:12.5px;color:var(--chalk-dim);margin:2px 0 4px;}
-  .progress{text-align:center;font-size:12px;color:var(--chalk-dim);margin-bottom:10px;}
-  .progress b{color:var(--good);}
+  .game{position:relative;max-width:620px;margin:0 auto;padding:12px 14px 20px;display:flex;flex-direction:column;gap:10px}
 
-  /* ---------- Venn stage ---------- */
-  .venn-wrap{
-    position:relative;
-    width:100%;
-    max-width:320px;
-    margin:0 auto 10px;
-    border:2px dashed rgba(245,243,231,.25);
-    border-radius:14px;
-    background:rgba(245,243,231,.02);
-  }
-  .venn-wrap svg{display:block;width:100%;height:100%;}
-  .setdefs{
-    text-align:center;
-    font-size:11.5px;
-    color:var(--chalk-dim);
-    margin-bottom:10px;
-    line-height:1.5;
-  }
-  .setdefs b{color:var(--chalk);}
+  .hud{display:flex;align-items:center;gap:8px}
+  .icon-btn{border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;border-radius:14px;height:44px;min-width:44px;padding:0 10px;font-size:18px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none}
+  .icon-btn:hover{background:rgba(255,255,255,.16)}
+  .hud .mid{flex:1;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
+  .pill{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-weight:700;font-size:17px;white-space:nowrap}
+  .lives span{display:inline-block;transition:.3s}
+  .lives .lost{filter:grayscale(1);opacity:.25;transform:scale(.8)}
 
-  /* ---------- Tray ---------- */
-  .tray{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    justify-content:center;
-    align-content:flex-start;
-    padding:10px 4px;
-    border-top:2px dashed rgba(245,243,231,.18);
-    flex:1;
-    align-content:flex-start;
-  }
+  .rule{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 12px;display:flex;align-items:center;gap:10px}
+  .rule .rn{background:var(--yellow);color:#1b0f45;font-weight:700;border-radius:12px;padding:4px 10px;font-size:14px;white-space:nowrap}
+  .rule .rt{font-weight:600;font-size:17px;flex:1}
+  .rule .prog{font-weight:700;color:var(--green);white-space:nowrap}
 
-  /* ---------- Chips ---------- */
-  .chip{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:14px;
-    color:#1E3B32;
-    background:var(--chalk);
-    border:2px solid rgba(30,59,50,.15);
-    border-radius:999px;
-    padding:6px 12px;
-    min-width:30px;
-    text-align:center;
-    cursor:grab;
-    user-select:none;
-    -webkit-user-select:none;
-    touch-action:none;
-    box-shadow:0 3px 0 rgba(0,0,0,.18);
-  }
-  .chip.dragging{
-    cursor:grabbing;
-    z-index:50;
-    box-shadow:0 8px 16px rgba(0,0,0,.4);
-    transform:scale(1.08);
-  }
-  .chip.placed{
-    background:var(--good);
-    box-shadow:none;
-    cursor:default;
-    pointer-events:none;
-    opacity:.92;
-  }
-  .chip.flash-wrong{
-    background:var(--miss);
-    color:var(--chalk);
-  }
+  .board{position:relative;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:24px;padding:8px}
+  svg#venn{display:block;width:100%;height:auto;max-height:58vh;touch-action:none}
+  .toast{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:rgba(0,0,0,.72);border:1px solid var(--line);border-radius:14px;padding:8px 14px;font-size:15px;font-weight:600;max-width:92%;text-align:center;animation:fade .2s;pointer-events:none}
+  .combo-pill{background:linear-gradient(90deg,#ff9f43,var(--pink));border:none}
+  .placed{animation:pin .35s}
+  @keyframes pin{from{transform:scale(0)}}
+  .hover-region{transition:fill-opacity .15s}
 
-  /* ---------- Overlays ---------- */
-  .overlay{
-    position:absolute;
-    inset:0;
-    background:rgba(10,20,16,.94);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    padding:30px 24px;
-    border-radius:12px;
-    gap:14px;
-  }
-  .overlay h2{font-family:var(--font-display);font-size:23px;margin:0;}
-  .overlay p{margin:0;font-size:14px;color:var(--chalk-dim);line-height:1.5;max-width:320px;}
-  .overlay .big-score{font-family:var(--font-display);font-size:38px;font-weight:700;color:var(--gold);}
-  .btn{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:15px;
-    color:#1E3B32;
-    background:var(--gold);
-    border:none;
-    border-radius:10px;
-    padding:12px 26px;
-    cursor:pointer;
-    box-shadow:0 6px 0 #B98A2B;
-  }
-  .btn:active{transform:translateY(3px);box-shadow:0 3px 0 #B98A2B;}
-  .rules{
-    text-align:left;
-    font-size:13px;
-    color:var(--chalk-dim);
-    background:rgba(245,243,231,.06);
-    border-radius:10px;
-    padding:12px 16px;
-    max-width:320px;
-    line-height:1.55;
-  }
-  .rules b{color:var(--chalk);}
-  .hidden{display:none !important;}
+  .tray-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .tray-head span{color:var(--muted);font-size:15px}
+  .tray{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:70px;padding:12px;background:var(--card);border:1px dashed var(--line);border-radius:20px}
+  .chip{min-width:58px;height:58px;padding:0 12px;border-radius:18px;border:2px solid rgba(255,255,255,.3);
+    background:linear-gradient(180deg,#5b3fd0,#3b2585);color:#fff;font-size:24px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;touch-action:none;box-shadow:0 5px 0 #24165a}
+  .chip small{font-size:11px;font-weight:500;margin-top:3px;opacity:.9}
+  .chip.sel{border-color:var(--yellow);box-shadow:0 0 0 4px rgba(255,210,63,.35),0 5px 0 #24165a;transform:translateY(-3px)}
+  .chip.wrong{animation:shake .4s;border-color:var(--red)}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  .ghost{position:fixed;z-index:30;pointer-events:none;transform:translate(-50%,-50%) scale(1.1);opacity:.92}
+
+  .overlay{position:fixed;inset:0;background:rgba(5,3,25,.78);display:grid;place-items:center;z-index:40;padding:16px;animation:fade .2s}
+  @keyframes fade{from{opacity:0}}
+  .box{background:linear-gradient(180deg,#2a1878,#170c4a);border:2px solid var(--line);border-radius:26px;padding:24px;max-width:410px;width:100%;text-align:center;animation:pop .25s;max-height:92vh;overflow:auto}
+  @keyframes pop{from{transform:scale(.85)}}
+  .box .big{font-size:58px;line-height:1.1}
+  .box h2{margin:6px 0 8px;font-size:26px}
+  .box p{color:var(--muted);margin:0 0 16px;font-size:17px;line-height:1.4}
+  .box ul{text-align:left;color:var(--muted);padding-left:20px;margin:0 0 18px;line-height:1.5;font-size:16px}
+  .box ul b{color:#fff}
+  .sets-preview{display:flex;gap:8px;justify-content:center;margin:0 0 18px;flex-wrap:wrap}
+  .sets-preview span{border-radius:14px;padding:8px 12px;font-weight:600;color:#1b0f45}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{flex:1;border:none;border-radius:16px;padding:13px 18px;font-size:19px;font-weight:700;color:#1b0f45;min-width:130px;
+    background:linear-gradient(180deg,#ffe57a,var(--yellow));box-shadow:0 6px 0 #c79a12}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c79a12}
+  .btn.ghost{background:rgba(255,255,255,.1);color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.35);border:1px solid var(--line);position:static;transform:none;opacity:1}
+  .btn.danger{background:linear-gradient(180deg,#ff7b93,var(--red));color:#fff;box-shadow:0 6px 0 #a3203a}
+  .end-stars{font-size:52px;letter-spacing:4px;margin:4px 0 6px}
+  .end-stars span{display:inline-block;animation:starIn .5s both}
+  .end-stars .off{filter:grayscale(1);opacity:.25}
+  @keyframes starIn{from{transform:scale(0) rotate(-90deg)}}
+  .score-big{font-size:40px;font-weight:700;color:var(--yellow)}
+  .record{color:var(--green);font-weight:600;margin-bottom:14px}
+  .confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:60;pointer-events:none;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 </style>
 </head>
 <body>
+<div id="stars"></div>
 
-<div class="frame">
+<div class="game">
+  <div class="hud">
+    <button class="icon-btn" id="exitBtn" title="Sair">🚪</button>
+    <div class="mid">
+      <span class="pill lives" id="lives"></span>
+      <span class="pill">⭐ <span id="score">0</span></span>
+      <span class="pill combo-pill hidden" id="combo"></span>
+    </div>
+    <button class="icon-btn" id="pauseBtn" title="Pausar">⏸️</button>
+    <button class="icon-btn" id="soundBtn" title="Som">🔊</button>
+  </div>
+
+  <div class="rule">
+    <span class="rn" id="roundNum">Rodada 1/3</span>
+    <span class="rt" id="roundText"></span>
+    <span class="prog" id="prog">0/8</span>
+  </div>
+
   <div class="board" id="board">
+    <svg id="venn" viewBox="0 0 400 280"></svg>
+  </div>
 
-    <div class="hud">
-      <p class="title">Diagrama de <span>Venn</span></p>
-      <div class="stats">
-        <span class="lives" id="lives">♥♥♥</span>
-        <span class="score">⭐ <span id="score">0</span></span>
-      </div>
+  <div class="tray-head">
+    <span>Arraste (ou toque e depois toque no diagrama) 👇</span>
+    <button class="icon-btn" id="hintBtn" title="Dica">💡 Dica</button>
+  </div>
+  <div class="tray" id="tray"></div>
+</div>
+
+<!-- Início -->
+<div class="overlay" id="startOv">
+  <div class="box">
+    <div class="big">🛸</div>
+    <h2>Diagrama de Venn</h2>
+    <p id="hello">Organize os elementos da galáxia!</p>
+    <ul>
+      <li>Cada elemento pode estar em <b>um conjunto</b>, em <b>vários</b> (interseção) ou em <b>nenhum</b> (fora dos círculos).</li>
+      <li><b>Arraste</b> o elemento até a região certa, ou <b>toque</b> nele e depois no diagrama.</li>
+      <li>Errou a região? Perde uma vida ❤️.</li>
+      <li>Travou? Use a 💡 <b>Dica</b>.</li>
+    </ul>
+    <div class="actions">
+      <button class="btn ghost" id="backBtn0">🗺️ Mapa</button>
+      <button class="btn" id="startBtn">Começar 🚀</button>
     </div>
-    <p class="round-label" id="roundLabel">&nbsp;</p>
-    <p class="setdefs" id="setDefs"></p>
+  </div>
+</div>
 
-    <div class="venn-wrap" id="vennWrap">
-      <svg id="vennSvg" viewBox="0 0 300 220" preserveAspectRatio="xMidYMid meet"></svg>
+<div class="overlay hidden" id="roundOv">
+  <div class="box">
+    <div class="big" id="rIcon">🪐</div>
+    <h2 id="rTitle">Rodada 1</h2>
+    <p id="rDesc"></p>
+    <div class="sets-preview" id="rSets"></div>
+    <div class="actions"><button class="btn" id="goBtn">Estou pronto(a)! ▶</button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="pauseOv">
+  <div class="box">
+    <div class="big">⏸️</div>
+    <h2>Jogo pausado</h2>
+    <p>Pode descansar. Seu diagrama continua aqui.</p>
+    <div class="actions">
+      <button class="btn ghost" id="restartBtn">🔄 Reiniciar</button>
+      <button class="btn" id="resumeBtn">Continuar ▶</button>
     </div>
+  </div>
+</div>
 
-    <p class="progress" id="progress"></p>
-    <div class="tray" id="tray"></div>
-
-    <!-- START -->
-    <div class="overlay" id="startOverlay">
-      <h2>Diagrama de Venn</h2>
-      <div class="rules">
-        Cada elemento pertence a um conjunto, a outro, aos dois ao mesmo tempo (interseção) ou a nenhum.
-        <b>Arraste</b> cada elemento da bandeja para a região correta do diagrama. Errar a região custa uma vida ♥.
-        São 3 rodadas — a última tem três conjuntos!
-      </div>
-      <button class="btn" id="startBtn">Começar</button>
+<div class="overlay hidden" id="exitOv">
+  <div class="box">
+    <div class="big">🚪</div>
+    <h2>Sair da missão?</h2>
+    <p>Os pontos desta partida não serão salvos.</p>
+    <div class="actions">
+      <button class="btn ghost" id="stayBtn">Continuar jogando</button>
+      <button class="btn danger" id="leaveBtn">Sair</button>
     </div>
+  </div>
+</div>
 
-    <!-- ROUND INTRO -->
-    <div class="overlay hidden" id="roundOverlay">
-      <h2 id="roundTitle">Rodada</h2>
-      <p id="roundDesc"></p>
-      <button class="btn" id="roundBtn">Ir para o diagrama</button>
+<div class="overlay hidden" id="endOv">
+  <div class="box">
+    <div class="big" id="endIcon">🏆</div>
+    <h2 id="endTitle">Missão cumprida!</h2>
+    <div class="end-stars" id="endStars"></div>
+    <div class="score-big"><span id="finalScore">0</span> pontos</div>
+    <div class="record" id="record"></div>
+    <p id="endDesc"></p>
+    <div class="actions">
+      <button class="btn ghost" id="mapBtn">🗺️ Mapa</button>
+      <button class="btn" id="againBtn">Jogar de novo 🔄</button>
     </div>
-
-    <!-- GAME OVER -->
-    <div class="overlay hidden" id="endOverlay">
-      <h2 id="endTitle">Fim de jogo</h2>
-      <p id="endDesc"></p>
-      <p class="big-score" id="finalScore">0</p>
-      <button class="btn" id="retryBtn">Jogar de novo</button>
-    </div>
-
   </div>
 </div>
 
 <script>
 (function(){
+  const GAME_ID = 'venn';
+  const $ = id => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
 
-  // ---------- Level definitions ----------
-  const levels = [
-    {
-      title: "Rodada 1 — Dois conjuntos numéricos",
-      desc: "A = números pares · B = múltiplos de 3. Alguns números são dos dois, alguns de nenhum.",
-      defsText: '<b>A</b> = números pares &nbsp;·&nbsp; <b>B</b> = múltiplos de 3',
-      viewBox: {w:300,h:220},
-      circles: [
-        {id:'A', cx:115, cy:110, r:85, color:'#E8635A', labelPos:{x:75,y:45}},
-        {id:'B', cx:185, cy:110, r:85, color:'#E8B84F', labelPos:{x:225,y:45}}
+  // ---------- Armazenamento ----------
+  const store = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+  const player = store.get('mq_player', null);
+
+  // ---------- Sons ----------
+  let soundOn = store.get('mq_sound', true), actx = null;
+  function beep(f, d, type, vol, delay){
+    if (!soundOn) return;
+    try{
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = actx.currentTime + (delay || 0), o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
+      g.gain.setValueAtTime(vol || .14, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d);
+    }catch(e){}
+  }
+  const sfx = {
+    click(){ beep(660,.08,'triangle',.1); },
+    pick(){ beep(520,.06,'sine',.1); },
+    ok(){ beep(784,.1,'triangle'); beep(1046,.15,'triangle',.14,.08); },
+    bad(){ beep(220,.25,'sawtooth',.08); beep(160,.3,'sawtooth',.08,.1); },
+    win(){ [523,659,784,1046,1318].forEach((f,i) => beep(f,.18,'triangle',.13,i*.1)); },
+    lose(){ [392,330,262,196].forEach((f,i) => beep(f,.25,'triangle',.12,i*.15)); }
+  };
+  const soundBtn = $('soundBtn');
+  const paintSound = () => soundBtn.textContent = soundOn ? '🔊' : '🔇';
+  soundBtn.onclick = () => { soundOn = !soundOn; store.set('mq_sound', soundOn); paintSound(); sfx.click(); };
+  paintSound();
+
+  for (let i = 0; i < 70; i++){
+    const s = document.createElement('span'), z = Math.random() < .15 ? 3 : 2;
+    s.className = 'star';
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${z}px;height:${z}px;animation-delay:${Math.random()*3}s`;
+    $('stars').appendChild(s);
+  }
+
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const range = (a, b) => Array.from({length:b - a + 1}, (_, i) => a + i);
+
+  // ---------- Geometria dos diagramas ----------
+  const COLORS = ['#35e0ff', '#ff5fa2', '#ffd23f'];
+  const LAYOUT2 = { vb:[400,280], circles:[{x:150,y:145,r:95},{x:250,y:145,r:95}], labels:[{x:100,y:34},{x:300,y:34}] };
+  const LAYOUT3 = { vb:[400,340], circles:[{x:160,y:128,r:86},{x:240,y:128,r:86},{x:200,y:202,r:86}], labels:[{x:90,y:30},{x:310,y:30},{x:200,y:318}] };
+
+  // ---------- Rodadas ----------
+  const numItem = n => ({ key:n, label:String(n), name:String(n) });
+  const ANIMALS = [
+    { e:'🦆', n:'Pato', f:1, w:1 }, { e:'🦢', n:'Cisne', f:1, w:1 }, { e:'🐧', n:'Pinguim', f:0, w:1 },
+    { e:'🐟', n:'Peixe', f:0, w:1 }, { e:'🐬', n:'Golfinho', f:0, w:1 }, { e:'🐙', n:'Polvo', f:0, w:1 },
+    { e:'🦅', n:'Águia', f:1, w:0 }, { e:'🦋', n:'Borboleta', f:1, w:0 }, { e:'🐝', n:'Abelha', f:1, w:0 }, { e:'🦇', n:'Morcego', f:1, w:0 },
+    { e:'🐶', n:'Cachorro', f:0, w:0 }, { e:'🐘', n:'Elefante', f:0, w:0 }, { e:'🦒', n:'Girafa', f:0, w:0 }, { e:'🐍', n:'Cobra', f:0, w:0 }
+  ];
+  const ROUNDS = [
+    { icon:'🔢', title:'Pares e Múltiplos de 3', layout:LAYOUT2, perRegion:2,
+      desc:'Alguns números são pares, outros são múltiplos de 3, e alguns são os dois! Esses vão na interseção.',
+      sets:[
+        { name:'A: Pares', short:'par', test:n => n % 2 === 0 },
+        { name:'B: Múltiplos de 3', short:'múltiplo de 3', test:n => n % 3 === 0 }
       ],
-      items: Array.from({length:12}, (_,i)=>i+1).map(n => ({
-        label:String(n),
-        m:{A: n%2===0, B: n%3===0}
-      }))
-    },
-    {
-      title: "Rodada 2 — Letras de duas palavras",
-      desc: "A = letras de CASA · B = letras de SAPO. Algumas letras aparecem nas duas palavras.",
-      defsText: '<b>A</b> = letras de "CASA" &nbsp;·&nbsp; <b>B</b> = letras de "SAPO"',
-      viewBox: {w:300,h:220},
-      circles: [
-        {id:'A', cx:115, cy:110, r:85, color:'#E8635A', labelPos:{x:75,y:45}},
-        {id:'B', cx:185, cy:110, r:85, color:'#E8B84F', labelPos:{x:225,y:45}}
+      universe: range(1, 20).map(numItem), value:it => it.key },
+    { icon:'🐾', title:'Bichos que voam e que nadam', layout:LAYOUT2, perRegion:2,
+      desc:'Quem voa vai em A, quem vive na água vai em B. O pato faz as duas coisas! E o cachorro? Nenhuma.',
+      sets:[
+        { name:'A: Voam', short:'voa', test:a => a.f === 1 },
+        { name:'B: Vivem na água', short:'vive na água', test:a => a.w === 1 }
       ],
-      items: [
-        {label:'C', m:{A:true,B:false}},
-        {label:'A', m:{A:true,B:true}},
-        {label:'S', m:{A:true,B:true}},
-        {label:'P', m:{A:false,B:true}},
-        {label:'O', m:{A:false,B:true}},
-        {label:'B', m:{A:false,B:false}},
-        {label:'E', m:{A:false,B:false}},
-        {label:'T', m:{A:false,B:false}}
-      ]
-    },
-    {
-      title: "Rodada 3 — Três conjuntos",
-      desc: "A = múltiplos de 2 · B = múltiplos de 3 · C = múltiplos de 5. Alguns números pertencem aos três!",
-      defsText: '<b>A</b> = múlt. de 2 &nbsp;·&nbsp; <b>B</b> = múlt. de 3 &nbsp;·&nbsp; <b>C</b> = múlt. de 5',
-      viewBox: {w:300,h:260},
-      circles: [
-        {id:'A', cx:115, cy:100, r:78, color:'#E8635A', labelPos:{x:60,y:35}},
-        {id:'B', cx:185, cy:100, r:78, color:'#E8B84F', labelPos:{x:240,y:35}},
-        {id:'C', cx:150, cy:172, r:78, color:'#4FB3A9', labelPos:{x:150,y:250}}
+      universe: ANIMALS.map(a => ({ key:a.n, label:a.e, name:a.n, small:a.n, f:a.f, w:a.w })), value:it => it },
+    { icon:'🌌', title:'Desafio dos 3 conjuntos', layout:LAYOUT3, perRegion:1,
+      desc:'Agora são TRÊS conjuntos! Um número pode estar em um, dois, três ou nenhum. Pense com calma.',
+      sets:[
+        { name:'A: Pares', short:'par', test:n => n % 2 === 0 },
+        { name:'B: Múltiplos de 3', short:'múltiplo de 3', test:n => n % 3 === 0 },
+        { name:'C: Maiores que 10', short:'maior que 10', test:n => n > 10 }
       ],
-      items: [
-        {label:'8',  m:{A:true, B:false,C:false}},
-        {label:'14', m:{A:true, B:false,C:false}},
-        {label:'9',  m:{A:false,B:true, C:false}},
-        {label:'21', m:{A:false,B:true, C:false}},
-        {label:'25', m:{A:false,B:false,C:true }},
-        {label:'5',  m:{A:false,B:false,C:true }},
-        {label:'6',  m:{A:true, B:true, C:false}},
-        {label:'18', m:{A:true, B:true, C:false}},
-        {label:'10', m:{A:true, B:false,C:true }},
-        {label:'20', m:{A:true, B:false,C:true }},
-        {label:'15', m:{A:false,B:true, C:true }},
-        {label:'30', m:{A:true, B:true, C:true }},
-        {label:'7',  m:{A:false,B:false,C:false}},
-        {label:'11', m:{A:false,B:false,C:false}}
-      ]
-    }
+      universe: range(1, 24).map(numItem), value:it => it.key }
   ];
 
-  // ---------- State ----------
-  let levelIdx = 0;
-  let score = 0;
-  let lives = 3;
-  let placedCount = 0;
-  let boardEl, trayEl, vennWrap, vennSvg;
-
-  boardEl = document.getElementById('board');
-  trayEl = document.getElementById('tray');
-  vennWrap = document.getElementById('vennWrap');
-  vennSvg = document.getElementById('vennSvg');
-
-  const scoreEl = document.getElementById('score');
-  const livesEl = document.getElementById('lives');
-  const roundLabelEl = document.getElementById('roundLabel');
-  const setDefsEl = document.getElementById('setDefs');
-  const progressEl = document.getElementById('progress');
-  const startOverlay = document.getElementById('startOverlay');
-  const roundOverlay = document.getElementById('roundOverlay');
-  const endOverlay = document.getElementById('endOverlay');
-  const roundTitleEl = document.getElementById('roundTitle');
-  const roundDescEl = document.getElementById('roundDesc');
-  const endTitleEl = document.getElementById('endTitle');
-  const endDescEl = document.getElementById('endDesc');
-  const finalScoreEl = document.getElementById('finalScore');
-
-  function updateHUD(){
-    scoreEl.textContent = score;
-    livesEl.textContent = "♥".repeat(lives) + "♡".repeat(3-lives);
+  function pickItems(R){
+    const groups = {};
+    R.universe.forEach(it => {
+      const sig = R.sets.map(s => s.test(R.value(it)) ? 1 : 0).join('');
+      (groups[sig] = groups[sig] || []).push(it);
+    });
+    let items = [];
+    Object.values(groups).forEach(g => items.push(...shuffle(g).slice(0, R.perRegion)));
+    return shuffle(items).map(it => ({ ...it, sig: R.sets.map(s => s.test(R.value(it)) ? 1 : 0) }));
   }
 
-  function buildLevel(){
-    const level = levels[levelIdx];
-    placedCount = 0;
+  // ---------- Estado ----------
+  let rIdx = 0, lives = 3, score = 0, combo = 0, placed = 0, items = [], selected = null, paused = false, playing = false;
+  const svg = $('venn'), tray = $('tray'), board = $('board');
 
-    roundLabelEl.textContent = level.title;
-    setDefsEl.innerHTML = level.defsText;
-    progressEl.innerHTML = `<b>0</b> / ${level.items.length} colocados corretamente`;
+  function paintHUD(){
+    $('lives').innerHTML = [0,1,2].map(i => `<span class="${i < lives ? '' : 'lost'}">❤️</span>`).join('');
+    $('score').textContent = score;
+    $('prog').textContent = `${placed}/${items.length || 8}`;
+  }
 
-    // build SVG
-    vennSvg.setAttribute('viewBox', `0 0 ${level.viewBox.w} ${level.viewBox.h}`);
-    vennWrap.style.aspectRatio = `${level.viewBox.w} / ${level.viewBox.h}`;
-    vennSvg.innerHTML = '';
-    level.circles.forEach(c => {
-      const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-      circle.setAttribute('cx', c.cx);
-      circle.setAttribute('cy', c.cy);
-      circle.setAttribute('r', c.r);
-      circle.setAttribute('fill', c.color);
-      circle.setAttribute('fill-opacity', '0.28');
-      circle.setAttribute('stroke', c.color);
-      circle.setAttribute('stroke-width', '2.5');
-      vennSvg.appendChild(circle);
+  function el(tag, attrs, parent){
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
 
-      const text = document.createElementNS('http://www.w3.org/2000/svg','text');
-      text.setAttribute('x', c.labelPos.x);
-      text.setAttribute('y', c.labelPos.y);
-      text.setAttribute('fill', c.color);
-      text.setAttribute('font-size', '20');
-      text.setAttribute('font-weight', '700');
-      text.setAttribute('text-anchor','middle');
-      text.setAttribute('font-family', 'system-ui, sans-serif');
-      text.textContent = c.id;
-      vennSvg.appendChild(text);
+  function drawDiagram(){
+    const R = ROUNDS[rIdx], L = R.layout;
+    svg.innerHTML = '';
+    svg.setAttribute('viewBox', `0 0 ${L.vb[0]} ${L.vb[1]}`);
+    el('rect', { x:4, y:4, width:L.vb[0] - 8, height:L.vb[1] - 8, rx:20, fill:'rgba(255,255,255,.04)', stroke:'rgba(255,255,255,.35)', 'stroke-width':2, 'stroke-dasharray':'6 6' }, svg);
+    const u = el('text', { x:22, y:L.vb[1] - 18, fill:'rgba(255,255,255,.6)', 'font-size':18, 'font-weight':700, 'font-family':'Fredoka, sans-serif' }, svg);
+    u.textContent = 'U';
+    L.circles.forEach((c, i) => {
+      el('circle', { cx:c.x, cy:c.y, r:c.r, fill:COLORS[i], 'fill-opacity':.16, stroke:COLORS[i], 'stroke-width':3, class:'hover-region' }, svg);
     });
+    L.circles.forEach((c, i) => {
+      const lb = L.labels[i];
+      const t = el('text', { x:lb.x, y:lb.y, fill:COLORS[i], 'font-size':16, 'font-weight':700, 'text-anchor':'middle', 'font-family':'Fredoka, sans-serif' }, svg);
+      t.textContent = R.sets[i].name;
+    });
+    el('g', { id:'pins' }, svg);
+  }
 
-    // build tray chips
-    trayEl.innerHTML = '';
-    level.items.forEach((item, idx) => {
-      const chip = document.createElement('div');
-      chip.className = 'chip';
-      chip.textContent = item.label;
-      chip.dataset.idx = idx;
-      attachDrag(chip, level, item);
-      trayEl.appendChild(chip);
+  function buildTray(){
+    tray.innerHTML = '';
+    items.forEach((it, idx) => {
+      const c = document.createElement('div');
+      c.className = 'chip';
+      c.dataset.idx = idx;
+      c.innerHTML = it.small ? `${it.label}<small>${it.small}</small>` : it.label;
+      attachDrag(c);
+      tray.appendChild(c);
     });
   }
 
-  function testMembership(level, localX, localY){
-    const result = {};
-    level.circles.forEach(c => {
-      const dx = localX - c.cx, dy = localY - c.cy;
-      result[c.id] = (dx*dx + dy*dy) <= (c.r*c.r);
-    });
-    return result;
+  function toast(txt){
+    board.querySelectorAll('.toast').forEach(t => t.remove());
+    const t = document.createElement('div'); t.className = 'toast'; t.textContent = txt;
+    board.appendChild(t); setTimeout(() => t.remove(), 2600);
+  }
+  function paintCombo(){
+    const c = $('combo');
+    c.textContent = `🔥 x${combo}`;
+    c.classList.toggle('hidden', combo < 3);
   }
 
-  function membershipsEqual(a, b, ids){
-    return ids.every(id => !!a[id] === !!b[id]);
+  function explain(it){
+    const R = ROUNDS[rIdx];
+    const yes = R.sets.filter((s, i) => it.sig[i]).map(s => s.short);
+    const who = it.name;
+    if (!yes.length) return `${who} não está em nenhum conjunto: fica fora dos círculos.`;
+    const list = yes.length === 1 ? yes[0] : yes.slice(0, -1).join(', ') + ' e ' + yes[yes.length - 1];
+    const only = yes.length < R.sets.length ? ' (e só isso)' : '';
+    return `${who} é ${list}${only}.`;
   }
 
-  function attachDrag(chip, level, item){
-    let dragging = false;
-    let offsetX = 0, offsetY = 0;
-
-    chip.addEventListener('pointerdown', (e) => {
-      if (chip.classList.contains('placed')) return;
-      dragging = true;
-      const chipRect = chip.getBoundingClientRect();
-      const boardRect = boardEl.getBoundingClientRect();
-      offsetX = e.clientX - chipRect.left;
-      offsetY = e.clientY - chipRect.top;
-
-      chip.style.position = 'absolute';
-      chip.style.left = (chipRect.left - boardRect.left) + 'px';
-      chip.style.top = (chipRect.top - boardRect.top) + 'px';
-      chip.style.margin = '0';
-      boardEl.appendChild(chip);
-      chip.classList.add('dragging');
+  // ---------- Arrastar / tocar ----------
+  function toSvg(cx, cy){
+    const pt = svg.createSVGPoint(); pt.x = cx; pt.y = cy;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  function attachDrag(chip){
+    let sx = 0, sy = 0, dragging = false, ghost = null;
+    chip.addEventListener('pointerdown', e => {
+      if (!playing || paused) return;
+      e.preventDefault();
+      sx = e.clientX; sy = e.clientY; dragging = false;
       chip.setPointerCapture(e.pointerId);
     });
-
-    chip.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      const boardRect = boardEl.getBoundingClientRect();
-      chip.style.left = (e.clientX - boardRect.left - offsetX) + 'px';
-      chip.style.top = (e.clientY - boardRect.top - offsetY) + 'px';
+    chip.addEventListener('pointermove', e => {
+      if (!chip.hasPointerCapture(e.pointerId)) return;
+      if (!dragging && Math.hypot(e.clientX - sx, e.clientY - sy) > 6){
+        dragging = true; sfx.pick();
+        ghost = chip.cloneNode(true); ghost.classList.add('ghost'); ghost.classList.remove('sel');
+        document.body.appendChild(ghost); chip.style.opacity = .3;
+      }
+      if (ghost){ ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px'; }
     });
-
-    function endDrag(e){
-      if (!dragging) return;
-      dragging = false;
-      chip.classList.remove('dragging');
-
-      const wrapRect = vennWrap.getBoundingClientRect();
-      const px = e.clientX, py = e.clientY;
-      const insideWrap = px >= wrapRect.left && px <= wrapRect.right && py >= wrapRect.top && py <= wrapRect.bottom;
-
-      if (!insideWrap){
-        returnToTray(chip);
-        return;
-      }
-
-      const scaleX = level.viewBox.w / wrapRect.width;
-      const scaleY = level.viewBox.h / wrapRect.height;
-      const localX = (px - wrapRect.left) * scaleX;
-      const localY = (py - wrapRect.top) * scaleY;
-      const ids = level.circles.map(c => c.id);
-      const tested = testMembership(level, localX, localY);
-
-      if (membershipsEqual(tested, item.m, ids)){
-        placeCorrect(chip, px, py, wrapRect, level);
+    const finish = e => {
+      if (!chip.hasPointerCapture(e.pointerId)) return;
+      chip.releasePointerCapture(e.pointerId);
+      if (dragging){
+        ghost && ghost.remove(); ghost = null; chip.style.opacity = '';
+        tryDrop(chip, e.clientX, e.clientY);
       } else {
-        wrongDrop(chip);
+        sfx.pick();
+        const was = chip === selected;
+        tray.querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
+        selected = was ? null : chip;
+        if (selected) chip.classList.add('sel');
       }
-    }
-
-    chip.addEventListener('pointerup', endDrag);
-    chip.addEventListener('pointercancel', endDrag);
+      dragging = false;
+    };
+    chip.addEventListener('pointerup', finish);
+    chip.addEventListener('pointercancel', e => { ghost && ghost.remove(); ghost = null; chip.style.opacity = ''; dragging = false; });
   }
+  svg.addEventListener('pointerup', e => {
+    if (!selected || !playing || paused) return;
+    const c = selected; selected = null; c.classList.remove('sel');
+    tryDrop(c, e.clientX, e.clientY);
+  });
 
-  function placeCorrect(chip, px, py, wrapRect, level){
-    const boardRect = boardEl.getBoundingClientRect();
-    chip.style.left = (px - boardRect.left - 15) + 'px';
-    chip.style.top = (py - boardRect.top - 12) + 'px';
-    chip.classList.add('placed');
-    score += 10;
-    placedCount++;
-    progressEl.innerHTML = `<b>${placedCount}</b> / ${level.items.length} colocados corretamente`;
-    updateHUD();
-
-    if (placedCount >= level.items.length){
-      setTimeout(nextLevel, 600);
-    }
-  }
-
-  function wrongDrop(chip){
-    chip.classList.add('flash-wrong');
-    lives--;
-    updateHUD();
-    setTimeout(() => {
-      chip.classList.remove('flash-wrong');
-      returnToTray(chip);
-      if (lives <= 0) setTimeout(() => endGame(false), 200);
-    }, 320);
-  }
-
-  function returnToTray(chip){
-    chip.style.position = '';
-    chip.style.left = '';
-    chip.style.top = '';
-    chip.style.margin = '';
-    trayEl.appendChild(chip);
-  }
-
-  function nextLevel(){
-    levelIdx++;
-    if (levelIdx >= levels.length){
-      endGame(true);
+  function tryDrop(chip, cx, cy){
+    const R = ROUNDS[rIdx], L = R.layout;
+    const p = toSvg(cx, cy);
+    if (p.x < 4 || p.y < 4 || p.x > L.vb[0] - 4 || p.y > L.vb[1] - 4){
+      if (Math.abs(p.x) < 2000) toast('Solte dentro do retângulo U 😉');
       return;
     }
-    roundTitleEl.textContent = levels[levelIdx].title;
-    roundDescEl.textContent = levels[levelIdx].desc;
-    roundOverlay.classList.remove('hidden');
+    const it = items[+chip.dataset.idx];
+    const sig = L.circles.map(c => Math.hypot(p.x - c.x, p.y - c.y) <= c.r ? 1 : 0);
+    if (sig.join('') === it.sig.join('')) correct(chip, it, p);
+    else wrong(chip, it);
   }
 
-  function endGame(won){
-    if (won){
-      endTitleEl.textContent = "Você dominou o diagrama de Venn! 🎉";
-      endDescEl.textContent = "As três rodadas foram concluídas — até a de três conjuntos!";
-    } else {
-      endTitleEl.textContent = "Fim de jogo";
-      endDescEl.textContent = "As vidas acabaram. Bora tentar de novo?";
+  function correct(chip, it, p){
+    combo++;
+    const pts = 10 + (combo >= 3 ? 5 : 0);
+    score += pts; placed++; sfx.ok();
+    chip.remove();
+    const g = el('g', { class:'placed', style:`transform-origin:${p.x}px ${p.y}px` }, svg.querySelector('#pins'));
+    el('circle', { cx:p.x, cy:p.y, r:17, fill:'#3b2585', stroke:'#4ef0a0', 'stroke-width':2.5 }, g);
+    const t = el('text', { x:p.x, y:p.y + 6, fill:'#fff', 'font-size': it.small ? 18 : 16, 'font-weight':700, 'text-anchor':'middle', 'font-family':'Fredoka, sans-serif' }, g);
+    t.textContent = it.label;
+    const plus = el('text', { x:p.x, y:p.y - 22, fill:'#4ef0a0', 'font-size':16, 'font-weight':700, 'text-anchor':'middle', 'font-family':'Fredoka, sans-serif' }, svg);
+    plus.textContent = '+' + pts;
+    plus.animate([{ opacity:1, transform:'translateY(0)' }, { opacity:0, transform:'translateY(-20px)' }], { duration:900 });
+    setTimeout(() => plus.remove(), 900);
+    paintHUD(); paintCombo();
+    if (placed >= items.length){
+      playing = false;
+      setTimeout(() => {
+        rIdx++;
+        if (rIdx >= ROUNDS.length) endGame(true);
+        else { sfx.win(); showRoundIntro(); }
+      }, 700);
     }
-    finalScoreEl.textContent = score;
-    endOverlay.classList.remove('hidden');
   }
 
+  function wrong(chip, it){
+    combo = 0; lives--; sfx.bad();
+    chip.classList.remove('wrong'); void chip.offsetWidth; chip.classList.add('wrong');
+    toast('Ops! ' + explain(it));
+    paintHUD(); paintCombo();
+    if (lives <= 0){ playing = false; setTimeout(() => endGame(false), 700); }
+  }
+
+  $('hintBtn').onclick = () => {
+    if (!playing || paused) return;
+    sfx.click();
+    const chip = selected || tray.querySelector('.chip');
+    if (!chip) return;
+    const it = items[+chip.dataset.idx], R = ROUNDS[rIdx];
+    const qs = R.sets.map(s => `é ${s.short}?`).join(' ');
+    tray.querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
+    selected = chip; chip.classList.add('sel');
+    toast(`💡 Pense: ${it.name} ${qs}`);
+  };
+
+  // ---------- Fluxo ----------
+  function showRoundIntro(){
+    const R = ROUNDS[rIdx];
+    $('rIcon').textContent = R.icon;
+    $('rTitle').textContent = `Rodada ${rIdx + 1}: ${R.title}`;
+    $('rDesc').textContent = R.desc;
+    $('rSets').innerHTML = R.sets.map((s, i) => `<span style="background:${COLORS[i]}">${s.name}</span>`).join('');
+    $('roundOv').classList.remove('hidden');
+  }
+  function startRound(){
+    $('roundOv').classList.add('hidden');
+    const R = ROUNDS[rIdx];
+    items = pickItems(R); placed = 0; selected = null;
+    $('roundNum').textContent = `Rodada ${rIdx + 1}/${ROUNDS.length}`;
+    $('roundText').textContent = R.title;
+    drawDiagram(); buildTray(); paintHUD(); paintCombo();
+    playing = true; paused = false;
+  }
   function resetGame(){
-    levelIdx = 0;
-    score = 0;
-    lives = 3;
-    updateHUD();
-    endOverlay.classList.add('hidden');
-    roundTitleEl.textContent = levels[0].title;
-    roundDescEl.textContent = levels[0].desc;
-    roundOverlay.classList.remove('hidden');
+    rIdx = 0; lives = 3; score = 0; combo = 0; items = []; placed = 0; playing = false; paused = false;
+    ['endOv','pauseOv','exitOv'].forEach(id => $(id).classList.add('hidden'));
+    paintHUD(); paintCombo(); showRoundIntro();
   }
 
-  document.getElementById('startBtn').addEventListener('click', () => {
-    startOverlay.classList.add('hidden');
-    roundTitleEl.textContent = levels[0].title;
-    roundDescEl.textContent = levels[0].desc;
-    roundOverlay.classList.remove('hidden');
+  function pause(){ if (!playing) return; paused = true; $('pauseOv').classList.remove('hidden'); }
+  function resume(){ paused = false; $('pauseOv').classList.add('hidden'); }
+  $('pauseBtn').onclick = () => { sfx.click(); pause(); };
+  $('resumeBtn').onclick = () => { sfx.click(); resume(); };
+  $('restartBtn').onclick = () => { sfx.click(); resetGame(); };
+  $('exitBtn').onclick = () => { sfx.click(); $('exitOv').classList.remove('hidden'); };
+  $('stayBtn').onclick = () => { sfx.click(); $('exitOv').classList.add('hidden'); };
+  $('leaveBtn').onclick = () => { location.href = 'index.html'; };
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' || e.key === 'p' || e.key === 'P'){
+      if (!$('pauseOv').classList.contains('hidden')) resume(); else pause();
+    }
   });
 
-  document.getElementById('roundBtn').addEventListener('click', () => {
-    roundOverlay.classList.add('hidden');
-    buildLevel();
-  });
+  function confetti(){
+    const colors = ['#ffd23f','#35e0ff','#ff5fa2','#4ef0a0','#8b5cf6'];
+    for (let i = 0; i < 80; i++){
+      const c = document.createElement('div'); c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[i % colors.length];
+      c.style.animationDuration = 2 + Math.random() * 2 + 's';
+      c.style.animationDelay = Math.random() * .6 + 's';
+      document.body.appendChild(c); setTimeout(() => c.remove(), 4800);
+    }
+  }
+  function endGame(won){
+    playing = false;
+    const stars = won ? (lives === 3 ? 3 : 2) : (rIdx >= 1 ? 1 : 0);
+    let isRecord = false;
+    if (player){
+      const all = store.get('mq_progress', {}), key = player.name.toLowerCase();
+      const mine = all[key] || {}, prev = mine[GAME_ID] || { best:0, stars:0 };
+      isRecord = score > prev.best;
+      mine[GAME_ID] = { best: Math.max(prev.best, score), stars: Math.max(prev.stars, stars) };
+      all[key] = mine; store.set('mq_progress', all);
+    }
+    $('endIcon').textContent = won ? '🏆' : '💪';
+    $('endTitle').textContent = won ? 'Missão cumprida!' : 'Fim da missão';
+    $('endDesc').textContent = won
+      ? 'Você dominou o Diagrama de Venn, até com três conjuntos!'
+      : 'Suas vidas acabaram, mas cada tentativa te deixa mais forte. Bora de novo?';
+    $('endStars').innerHTML = [0,1,2].map(i => `<span class="${i < stars ? '' : 'off'}" style="animation-delay:${.2 + i * .25}s">⭐</span>`).join('');
+    $('finalScore').textContent = score;
+    $('record').textContent = isRecord && score > 0 ? '🎉 Novo recorde!' : '';
+    $('endOv').classList.remove('hidden');
+    if (won){ sfx.win(); confetti(); } else sfx.lose();
+  }
 
-  document.getElementById('retryBtn').addEventListener('click', resetGame);
+  $('startBtn').onclick = () => { sfx.click(); $('startOv').classList.add('hidden'); showRoundIntro(); };
+  $('goBtn').onclick = () => { sfx.click(); startRound(); };
+  $('againBtn').onclick = () => { sfx.click(); resetGame(); };
+  $('mapBtn').onclick = $('backBtn0').onclick = () => { location.href = 'index.html'; };
 
-  updateHUD();
+  if (player) $('hello').textContent = `${player.avatar} ${player.name}, organize os elementos da galáxia!`;
+  $('roundText').textContent = ROUNDS[0].title;
+  drawDiagram(); paintHUD();
 })();
 </script>
-
 </body>
 </html>

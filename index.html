@@ -3,157 +3,321 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jogos de Matemática — Unidade 1</title>
+<title>Missão Matemática</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --board:#1E3B32;
-    --board-dark:#183129;
-    --chalk:#F5F3E7;
-    --chalk-dim:#CFE0D6;
-    --frame:#6B4A34;
-    --frame-dark:#4A3324;
-    --coral:#E8635A;
-    --gold:#E8B84F;
-    --teal:#4FB3A9;
-    --font-display: "Segoe UI Rounded","SF Rounded",system-ui,-apple-system,"Trebuchet MS",sans-serif;
-    --font-body: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --bg1:#0b0730; --bg2:#1d1060; --ink:#ffffff; --muted:#bdb6ee;
+    --pink:#ff5fa2; --cyan:#35e0ff; --yellow:#ffd23f; --green:#4ef0a0;
+    --purple:#8b5cf6; --red:#ff4d6d; --card:rgba(255,255,255,.08); --line:rgba(255,255,255,.16);
+    --font:"Fredoka","Segoe UI Rounded","Trebuchet MS",system-ui,sans-serif;
   }
-  *{box-sizing:border-box;}
-  html,body{height:100%;}
+  *{box-sizing:border-box}
+  html{background:#140b45}
+  html,body{margin:0;min-height:100%}
   body{
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:
-      radial-gradient(circle at 20% 15%, #2a4a3f 0%, transparent 45%),
-      radial-gradient(circle at 85% 80%, #24463c 0%, transparent 40%),
-      var(--board-dark);
-    font-family:var(--font-body);
-    color:var(--chalk);
-    padding:18px;
+    font-family:var(--font); color:var(--ink); min-height:100vh;
+    background:radial-gradient(ellipse at 20% 0%, #3a1c8f 0%, transparent 55%),
+               radial-gradient(ellipse at 90% 100%, #0f4c7a 0%, transparent 50%),
+               linear-gradient(180deg,var(--bg1),var(--bg2));
+    background-attachment:fixed; overflow-x:hidden;
   }
-  .frame{
-    width:100%;
-    max-width:480px;
-    border-radius:18px;
-    padding:10px;
-    background:linear-gradient(155deg,var(--frame),var(--frame-dark));
-    box-shadow:0 18px 40px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.06);
-  }
-  .board{
-    position:relative;
-    background:
-      radial-gradient(circle at 30% 20%, rgba(255,255,255,.035) 0%, transparent 40%),
-      radial-gradient(circle at 75% 70%, rgba(255,255,255,.03) 0%, transparent 35%),
-      var(--board);
-    border-radius:12px;
-    padding:26px 20px;
-  }
-  .title{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:22px;
-    margin:0 0 4px;
-    text-align:center;
-  }
-  .title span{color:var(--gold);}
-  .subtitle{
-    text-align:center;
-    font-size:13px;
-    color:var(--chalk-dim);
-    margin:0 0 22px;
-  }
-  .list{
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-  }
-  .card{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    text-decoration:none;
-    color:var(--chalk);
-    background:rgba(245,243,231,.06);
-    border:2px solid rgba(245,243,231,.15);
-    border-radius:12px;
-    padding:14px 16px;
-    transition:transform .12s ease, border-color .12s ease;
-  }
-  .card:hover, .card:focus-visible{
-    transform:translateY(-2px);
-    border-color:var(--gold);
-  }
-  .card .icon{
-    font-size:26px;
-    width:44px;
-    height:44px;
-    flex:none;
-    border-radius:10px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .c1 .icon{background:rgba(232,99,90,.25);}
-  .c2 .icon{background:rgba(79,179,169,.25);}
-  .card .info{flex:1;}
-  .card .name{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:15px;
-    margin:0 0 2px;
-  }
-  .card .desc{
-    font-size:12.5px;
-    color:var(--chalk-dim);
-    margin:0;
-    line-height:1.4;
-  }
-  .card .arrow{
-    font-size:18px;
-    color:var(--gold);
-    flex:none;
-  }
-  .empty-note{
-    text-align:center;
-    font-size:12px;
-    color:rgba(245,243,231,.35);
-    margin-top:22px;
-  }
+  #stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .star{position:absolute;background:#fff;border-radius:50%;animation:tw 3s infinite ease-in-out}
+  @keyframes tw{0%,100%{opacity:.25}50%{opacity:1}}
+  .shooting{position:fixed;width:120px;height:2px;background:linear-gradient(90deg,transparent,#fff);
+    transform:rotate(18deg);animation:shoot 7s infinite linear;opacity:0;z-index:0;pointer-events:none}
+  @keyframes shoot{0%{left:-10%;top:5%;opacity:0}3%{opacity:1}12%{left:110%;top:40%;opacity:0}100%{opacity:0;left:110%}}
+
+  .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:16px 16px 40px}
+  .hidden{display:none!important}
+  button{font-family:inherit;cursor:pointer}
+
+  /* Boas-vindas */
+  .welcome{min-height:92vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px}
+  .logo-rocket{font-size:72px;animation:float 3s ease-in-out infinite;filter:drop-shadow(0 8px 20px rgba(53,224,255,.5))}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-14px) rotate(6deg)}}
+  h1{margin:0;font-size:clamp(34px,7vw,56px);line-height:1.05}
+  h1 .grad{background:linear-gradient(90deg,var(--cyan),var(--pink),var(--yellow));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);margin:0;font-size:18px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px;backdrop-filter:blur(6px);width:100%;max-width:460px}
+  .panel label{display:block;text-align:left;font-weight:600;margin:4px 0 8px}
+  .panel input{width:100%;font-family:inherit;font-size:20px;padding:12px 16px;border-radius:14px;border:2px solid var(--line);
+    background:rgba(0,0,0,.25);color:#fff;outline:none}
+  .panel input:focus{border-color:var(--cyan)}
+  .avatars{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:6px 0 18px}
+  .av{font-size:28px;aspect-ratio:1;border-radius:16px;border:2px solid var(--line);background:rgba(255,255,255,.05);transition:.15s;padding:0}
+  .av:hover{transform:scale(1.08)}
+  .av.sel{border-color:var(--yellow);background:rgba(255,210,63,.18);box-shadow:0 0 0 4px rgba(255,210,63,.18)}
+  .btn{border:none;border-radius:16px;padding:14px 22px;font-size:20px;font-weight:700;color:#1b0f45;
+    background:linear-gradient(180deg,#ffe57a,var(--yellow));box-shadow:0 6px 0 #c79a12;transition:transform .1s}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c79a12}
+  .btn.full{width:100%}
+  .btn.ghost{background:rgba(255,255,255,.1);color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.35);border:1px solid var(--line)}
+  .btn.danger{background:linear-gradient(180deg,#ff7b93,var(--red));color:#fff;box-shadow:0 6px 0 #a3203a}
+  .err{color:var(--pink);min-height:20px;margin:8px 0 0;font-size:15px}
+
+  /* Topo */
+  .top{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:10px 12px;flex-wrap:wrap}
+  .me{display:flex;align-items:center;gap:10px;flex:1;min-width:180px}
+  .me .face{font-size:32px;width:52px;height:52px;flex:none;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink))}
+  .me b{font-size:19px;display:block}
+  .rank{font-size:14px;color:var(--yellow)}
+  .total{font-size:20px;font-weight:700;background:rgba(0,0,0,.25);border-radius:14px;padding:6px 12px}
+  .icon-btn{border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;border-radius:14px;height:44px;min-width:44px;padding:0 12px;font-size:17px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  .icon-btn:hover{background:rgba(255,255,255,.16)}
+  .xp{margin:14px 2px 0}
+  .xp-bar{height:12px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+  .xp-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:99px;transition:width .8s}
+  .xp small{color:var(--muted);display:block;margin-top:6px;font-size:15px}
+
+  .unit{margin:28px 0 6px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .unit h2{margin:0;font-size:26px}
+  .tag{font-size:14px;font-weight:600;color:#1b0f45;background:var(--cyan);border-radius:99px;padding:3px 10px}
+
+  /* Planetas */
+  .planets{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:14px}
+  .planet-card{position:relative;text-decoration:none;color:#fff;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:20px 18px;
+    display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;transition:transform .2s,border-color .2s;overflow:hidden}
+  a.planet-card:hover{transform:translateY(-6px);border-color:var(--cyan)}
+  .planet{width:104px;height:104px;border-radius:50%;display:grid;place-items:center;font-size:42px;position:relative;margin:6px 0;
+    box-shadow:inset -14px -12px 0 rgba(0,0,0,.25),0 0 30px var(--glow,rgba(53,224,255,.4));animation:bob 5s ease-in-out infinite}
+  .planet::after{content:"";position:absolute;width:146px;height:30px;border:4px solid rgba(255,255,255,.35);border-radius:50%;transform:rotate(-18deg)}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .p1{background:radial-gradient(circle at 35% 30%,#7ff3ff,#1aa3d6 60%,#0b5f8f);--glow:rgba(53,224,255,.55)}
+  .p2{background:radial-gradient(circle at 35% 30%,#ffb3d6,#ff5fa2 60%,#b3226a);--glow:rgba(255,95,162,.55)}
+  .p3{background:radial-gradient(circle at 35% 30%,#ccc,#777 60%,#444);--glow:rgba(255,255,255,.08)}
+  .planet-card h3{margin:4px 0 0;font-size:22px}
+  .planet-card p{margin:0;color:var(--muted);font-size:15px;min-height:40px}
+  .stars-row{font-size:26px;letter-spacing:2px}
+  .stars-row .off{filter:grayscale(1);opacity:.3}
+  .best{font-size:14px;color:var(--muted)}
+  .play{margin-top:4px;font-weight:700;background:var(--green);color:#0b3322;border-radius:99px;padding:8px 20px}
+  .locked{opacity:.55}
+  .locked .play{background:rgba(255,255,255,.15);color:#fff}
+  .new{position:absolute;top:12px;right:12px;background:var(--pink);font-size:12px;font-weight:700;border-radius:99px;padding:3px 9px}
+
+  /* Modal */
+  .modal{position:fixed;inset:0;background:rgba(5,3,25,.75);display:grid;place-items:center;z-index:50;padding:16px;animation:fade .2s}
+  @keyframes fade{from{opacity:0}}
+  .modal .box{background:linear-gradient(180deg,#2a1878,#170c4a);border:2px solid var(--line);border-radius:26px;padding:26px;max-width:380px;width:100%;text-align:center;animation:pop .25s}
+  @keyframes pop{from{transform:scale(.8)}}
+  .modal .big{font-size:56px}
+  .modal h3{margin:6px 0;font-size:24px}
+  .modal p{color:var(--muted);margin:0 0 18px}
+  .modal .actions{display:flex;gap:10px}
+  .modal .actions .btn{flex:1;font-size:18px;padding:12px}
+  footer{text-align:center;color:var(--muted);font-size:14px;margin-top:34px}
+  @media (max-width:440px){ .avatars{grid-template-columns:repeat(4,1fr)} .total{font-size:17px} .icon-btn .lbl{display:none} }
 </style>
 </head>
 <body>
+<div id="stars"></div>
+<div class="shooting"></div>
 
-<div class="frame">
-  <div class="board">
-    <p class="title">Jogos de <span>Matemática</span></p>
-    <p class="subtitle">Unidade 1 — Conjuntos</p>
+<div class="wrap">
 
-    <div class="list">
-      <a class="card c1" href="caca-ao-conjunto.html">
-        <div class="icon">🎯</div>
-        <div class="info">
-          <p class="name">Caça ao Conjunto</p>
-          <p class="desc">Classifique elementos por pertinência antes que o tempo acabe.</p>
-        </div>
-        <div class="arrow">→</div>
+  <!-- Tela de boas-vindas -->
+  <section id="welcome" class="welcome hidden">
+    <div class="logo-rocket">🚀</div>
+    <h1>Missão <span class="grad">Matemática</span></h1>
+    <p class="sub">Explore planetas, vença desafios e ganhe estrelas!</p>
+    <div class="panel">
+      <label for="nameInput">Qual é o seu nome, astronauta?</label>
+      <input id="nameInput" maxlength="16" placeholder="Digite seu nome" autocomplete="off">
+      <label style="margin-top:16px">Escolha seu avatar</label>
+      <div class="avatars" id="avatars"></div>
+      <button class="btn full" id="launchBtn">Decolar 🚀</button>
+      <p class="err" id="err"></p>
+    </div>
+  </section>
+
+  <!-- Mapa de planetas -->
+  <section id="map" class="hidden">
+    <div class="top">
+      <div class="me">
+        <div class="face" id="meFace">🧑‍🚀</div>
+        <div><b id="meName">Astronauta</b><span class="rank" id="meRank">Cadete Espacial</span></div>
+      </div>
+      <div class="total">⭐ <span id="totalStars">0</span></div>
+      <button class="icon-btn" id="soundBtn" title="Ligar/desligar som">🔊</button>
+      <button class="icon-btn" id="exitBtn" title="Sair">🚪 <span class="lbl">Sair</span></button>
+    </div>
+    <div class="xp">
+      <div class="xp-bar"><i id="xpFill"></i></div>
+      <small id="xpText">Ganhe estrelas para subir de patente!</small>
+    </div>
+
+    <div class="unit"><h2>🪐 Galáxia dos Conjuntos</h2><span class="tag">Unidade 1</span></div>
+    <div class="planets">
+      <a class="planet-card" href="caca-ao-conjunto.html" data-game="caca">
+        <div class="planet p1">☄️</div>
+        <h3>Caça ao Conjunto</h3>
+        <p>Meteoros estão caindo! Mande cada um para o conjunto certo.</p>
+        <div class="stars-row" data-stars></div>
+        <div class="best" data-best>Recorde: —</div>
+        <span class="play">Jogar ▶</span>
       </a>
-
-      <a class="card c2" href="diagrama-de-venn.html">
-        <div class="icon">🟢</div>
-        <div class="info">
-          <p class="name">Diagrama de Venn</p>
-          <p class="desc">Arraste os elementos para a região correta de até três conjuntos.</p>
-        </div>
-        <div class="arrow">→</div>
+      <a class="planet-card" href="diagrama-de-venn.html" data-game="venn">
+        <div class="planet p2">🛸</div>
+        <h3>Diagrama de Venn</h3>
+        <p>Arraste cada elemento para a região certa do diagrama.</p>
+        <div class="stars-row" data-stars></div>
+        <div class="best" data-best>Recorde: —</div>
+        <span class="play">Jogar ▶</span>
       </a>
     </div>
 
-    <p class="empty-note">mais jogos em breve</p>
+    <div class="unit"><h2>🌌 Próximas galáxias</h2><span class="tag" style="background:var(--muted)">Em breve</span></div>
+    <div class="planets">
+      <div class="planet-card locked"><div class="planet p3">🍕</div><h3>Frações e Porcentagens</h3><p>Planeta ainda em exploração...</p><span class="play">🔒 Bloqueado</span></div>
+      <div class="planet-card locked"><div class="planet p3">🎲</div><h3>Decimais e Probabilidade</h3><p>Planeta ainda em exploração...</p><span class="play">🔒 Bloqueado</span></div>
+      <div class="planet-card locked"><div class="planet p3">📍</div><h3>Plano Cartesiano</h3><p>Planeta ainda em exploração...</p><span class="play">🔒 Bloqueado</span></div>
+    </div>
+    <footer>Missão Matemática · 6º ano</footer>
+  </section>
+</div>
+
+<!-- Modal de saída -->
+<div class="modal hidden" id="exitModal">
+  <div class="box">
+    <div class="big">👋</div>
+    <h3>Sair da nave?</h3>
+    <p>Suas estrelas ficam guardadas neste aparelho. Outra pessoa poderá entrar com o nome dela.</p>
+    <div class="actions">
+      <button class="btn ghost" id="stayBtn">Ficar</button>
+      <button class="btn danger" id="leaveBtn">Sair</button>
+    </div>
   </div>
 </div>
 
+<script>
+(function(){
+  // ---------- Armazenamento (protegido contra erros) ----------
+  const store = {
+    get(k, def){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; }catch(e){ return def; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+    del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  };
+
+  // ---------- Sons gerados pelo navegador (sem arquivos) ----------
+  let soundOn = store.get('mq_sound', true), actx = null;
+  function beep(freq, dur, type, vol, delay){
+    if (!soundOn) return;
+    try{
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = actx.currentTime + (delay || 0);
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(vol || .15, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur);
+    }catch(e){}
+  }
+  const click = () => beep(660, .08, 'triangle', .12);
+
+  // ---------- Estrelas do fundo ----------
+  const starBox = document.getElementById('stars');
+  for (let i = 0; i < 90; i++){
+    const s = document.createElement('span');
+    const size = Math.random() < .15 ? 3 : 2;
+    s.className = 'star';
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;animation-delay:${Math.random()*3}s`;
+    starBox.appendChild(s);
+  }
+
+  // ---------- Dados ----------
+  const AVATARS = ['🧑‍🚀','👩‍🚀','👨‍🚀','👽','🤖','🦊','🐼','🐱','🐸','🦄','🐙','🐲'];
+  const GAMES = ['caca','venn'];
+  const RANKS = [
+    {min:0, name:'Cadete Espacial'},
+    {min:2, name:'Explorador(a) Estelar'},
+    {min:4, name:'Piloto Galáctico'},
+    {min:6, name:'Comandante do Universo'}
+  ];
+
+  const welcome = document.getElementById('welcome');
+  const map = document.getElementById('map');
+  const nameInput = document.getElementById('nameInput');
+  const avBox = document.getElementById('avatars');
+  let chosen = AVATARS[0];
+
+  AVATARS.forEach(a => {
+    const b = document.createElement('button');
+    b.className = 'av'; b.textContent = a; b.type = 'button';
+    b.onclick = () => { chosen = a; click(); [...avBox.children].forEach(x => x.classList.toggle('sel', x === b)); };
+    avBox.appendChild(b);
+  });
+  avBox.children[0].classList.add('sel');
+
+  function showWelcome(){
+    map.classList.add('hidden'); welcome.classList.remove('hidden');
+    nameInput.value = ''; nameInput.focus();
+  }
+
+  function showMap(){
+    const player = store.get('mq_player', null);
+    if (!player){ showWelcome(); return; }
+    welcome.classList.add('hidden'); map.classList.remove('hidden');
+    document.getElementById('meFace').textContent = player.avatar;
+    document.getElementById('meName').textContent = player.name;
+
+    // progresso separado por jogador
+    const all = store.get('mq_progress', {});
+    const prog = all[player.name.toLowerCase()] || {};
+    let total = 0;
+    document.querySelectorAll('[data-game]').forEach(card => {
+      const r = prog[card.dataset.game] || {best:0, stars:0};
+      total += r.stars || 0;
+      card.querySelector('[data-stars]').innerHTML =
+        [0,1,2].map(i => `<span class="${i < r.stars ? '' : 'off'}">⭐</span>`).join('');
+      card.querySelector('[data-best]').textContent = r.best ? `Recorde: ${r.best} pontos` : 'Recorde: —';
+      const old = card.querySelector('.new'); if (old) old.remove();
+      if (!r.best){ const n = document.createElement('span'); n.className = 'new'; n.textContent = 'NOVO'; card.appendChild(n); }
+    });
+    document.getElementById('totalStars').textContent = total;
+
+    const max = GAMES.length * 3;
+    let rank = RANKS[0], next = RANKS[1];
+    RANKS.forEach((r, i) => { if (total >= r.min){ rank = r; next = RANKS[i+1] || null; } });
+    document.getElementById('meRank').textContent = rank.name;
+    document.getElementById('xpFill').style.width = Math.round(total / max * 100) + '%';
+    document.getElementById('xpText').textContent = next
+      ? `Faltam ${next.min - total} ⭐ para virar ${next.name}`
+      : 'Você chegou ao topo da galáxia! 🏆';
+  }
+
+  document.getElementById('launchBtn').onclick = () => {
+    const name = nameInput.value.trim();
+    if (!name){ document.getElementById('err').textContent = 'Digite seu nome para decolar!'; beep(200,.2,'square',.08); return; }
+    document.getElementById('err').textContent = '';
+    store.set('mq_player', {name, avatar: chosen});
+    [523,659,784,1046].forEach((f,i) => beep(f,.15,'triangle',.12,i*.09));
+    showMap();
+  };
+  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('launchBtn').click(); });
+
+  // Som
+  const soundBtn = document.getElementById('soundBtn');
+  const paintSound = () => soundBtn.textContent = soundOn ? '🔊' : '🔇';
+  soundBtn.onclick = () => { soundOn = !soundOn; store.set('mq_sound', soundOn); paintSound(); click(); };
+  paintSound();
+
+  // Sair (troca de jogador)
+  const exitModal = document.getElementById('exitModal');
+  document.getElementById('exitBtn').onclick = () => { click(); exitModal.classList.remove('hidden'); };
+  document.getElementById('stayBtn').onclick = () => { click(); exitModal.classList.add('hidden'); };
+  document.getElementById('leaveBtn').onclick = () => {
+    beep(440,.15,'triangle',.12); beep(330,.2,'triangle',.12,.12);
+    store.del('mq_player'); exitModal.classList.add('hidden'); showWelcome();
+  };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') exitModal.classList.add('hidden'); });
+
+  document.querySelectorAll('a.planet-card').forEach(a => a.addEventListener('click', click));
+
+  // Atualiza ao voltar de um jogo pelo botão "voltar" do navegador
+  window.addEventListener('pageshow', showMap);
+})();
+</script>
 </body>
 </html>
