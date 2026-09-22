@@ -64,7 +64,15 @@
   .me .face{font-size:32px;width:52px;height:52px;flex:none;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink))}
   .me b{font-size:19px;display:block}
   .rank{font-size:14px;color:var(--yellow)}
-  .total{font-size:20px;font-weight:700;background:rgba(0,0,0,.25);border-radius:14px;padding:6px 12px}
+  .total{font-size:20px;font-weight:700;background:rgba(0,0,0,.25);border-radius:14px;padding:6px 12px;display:inline-flex;align-items:center;gap:8px}
+  .gas-plus{border:none;background:rgba(255,255,255,.18);color:#fff;width:24px;height:24px;border-radius:50%;
+    font-weight:800;font-size:16px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0;flex:none}
+  .gas-plus:hover{background:rgba(255,255,255,.3)}
+  .gas-plus.ready{background:var(--yellow);color:#1b0f45;animation:readyPulse 1s ease-in-out infinite}
+  @keyframes readyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+  .gas-bar{height:14px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin:10px 0 4px}
+  .gas-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff9fd0,var(--pink),#8b5cf6);border-radius:99px;transition:width .4s}
+  .gas-count{color:var(--muted);font-size:15px;margin:0 0 18px}
   .icon-btn{border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;border-radius:14px;height:44px;min-width:44px;padding:0 12px;font-size:17px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px}
   .icon-btn:hover{background:rgba(255,255,255,.16)}
   .xp{margin:14px 2px 0}
@@ -140,7 +148,7 @@
         <div class="face" id="meFace">🧑‍🚀</div>
         <div><b id="meName">Astronauta</b><span class="rank" id="meRank">Cadete Espacial</span></div>
       </div>
-      <div class="total">⭐ <span id="totalStars">0</span></div>
+      <div class="total">⭐ <span id="totalStars">0</span> <button class="gas-plus" id="gasTradeBtn" title="Trocar gás por estrela">+</button></div>
       <button class="icon-btn" id="soundBtn" title="Ligar/desligar som">🔊</button>
       <button class="icon-btn" id="exitBtn" title="Sair">🚪 <span class="lbl">Sair</span></button>
     </div>
@@ -196,6 +204,21 @@
   </div>
 </div>
 
+<!-- Modal de troca de gás -->
+<div class="modal hidden" id="gasModal">
+  <div class="box">
+    <div class="big">🌌</div>
+    <h3>Trocar gás por estrela</h3>
+    <p>O gás que você junta jogando fica guardado, mesmo se sair no meio da partida. Junte 5000 para trocar por uma estrela ⭐.</p>
+    <div class="gas-bar"><i id="gasBarFill"></i></div>
+    <p class="gas-count" id="gasCount">0 / 5000</p>
+    <div class="actions">
+      <button class="btn ghost" id="gasCloseBtn">Fechar</button>
+      <button class="btn" id="gasExchangeBtn">Trocar por ⭐</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   // ---------- Armazenamento (protegido contra erros) ----------
@@ -219,6 +242,17 @@
     }catch(e){}
   }
   const click = () => beep(660, .08, 'triangle', .12);
+  const starChime = () => { beep(1318, .15, 'sine', .13); beep(1568, .18, 'sine', .1, .08); };
+
+  // ---------- Banco de gás (persistente, por jogador) ----------
+  const GAS_STAR_COST = 5000;
+  let gasKey = null;
+  function readGasBank(){ return gasKey ? (store.get('mq_gas', {})[gasKey] || { gas:0, stars:0 }) : { gas:0, stars:0 }; }
+  function writeGasBank(mine){
+    if (!gasKey) return;
+    const bank = store.get('mq_gas', {});
+    bank[gasKey] = mine; store.set('mq_gas', bank);
+  }
 
   // ---------- Estrelas do fundo ----------
   const starBox = document.getElementById('stars');
@@ -269,9 +303,10 @@
     // progresso separado por jogador
     const all = store.get('mq_progress', {});
     const prog = all[player.name.toLowerCase()] || {};
-    const gasBank = store.get('mq_gas', {});
-    const gasMine = gasBank[player.name.toLowerCase()] || { gas:0, stars:0 };
+    gasKey = player.name.toLowerCase();
+    const gasMine = readGasBank();
     let total = gasMine.stars || 0;
+    document.getElementById('gasTradeBtn').classList.toggle('ready', gasMine.gas >= GAS_STAR_COST);
     document.querySelectorAll('[data-game]').forEach(card => {
       const r = prog[card.dataset.game] || {best:0, stars:0};
       total += r.stars || 0;
@@ -318,6 +353,26 @@
     store.del('mq_player'); exitModal.classList.add('hidden'); showWelcome();
   };
   document.addEventListener('keydown', e => { if (e.key === 'Escape') exitModal.classList.add('hidden'); });
+
+  // Trocar gás por estrela
+  const gasModal = document.getElementById('gasModal');
+  function paintGasModal(){
+    const mine = readGasBank();
+    document.getElementById('gasCount').textContent = `${mine.gas} / ${GAS_STAR_COST}`;
+    document.getElementById('gasBarFill').style.width = Math.min(mine.gas / GAS_STAR_COST * 100, 100) + '%';
+    const can = mine.gas >= GAS_STAR_COST;
+    const btn = document.getElementById('gasExchangeBtn');
+    btn.style.opacity = can ? 1 : .5;
+    btn.style.pointerEvents = can ? 'auto' : 'none';
+  }
+  document.getElementById('gasTradeBtn').onclick = () => { click(); paintGasModal(); gasModal.classList.remove('hidden'); };
+  document.getElementById('gasCloseBtn').onclick = () => { click(); gasModal.classList.add('hidden'); };
+  document.getElementById('gasExchangeBtn').onclick = () => {
+    const mine = readGasBank();
+    if (mine.gas < GAS_STAR_COST) return;
+    mine.gas -= GAS_STAR_COST; mine.stars = (mine.stars || 0) + 1; writeGasBank(mine);
+    starChime(); paintGasModal(); showMap();
+  };
 
   document.querySelectorAll('a.planet-card').forEach(a => a.addEventListener('click', click));
 

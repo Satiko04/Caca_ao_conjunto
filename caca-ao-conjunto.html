@@ -118,20 +118,6 @@
   .gas-icon .cloud{position:absolute;inset:-5px;border-radius:50%;
     background:radial-gradient(circle at 35% 35%,#ff9fd0,#ff5fa2 40%,#8b5cf6 70%,transparent 80%);
     filter:blur(3px);opacity:.85;transform:scale(.5);transition:transform .25s ease,opacity .3s}
-  .gas-icon .star{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;
-    opacity:0;transform:scale(.2) rotate(-45deg);transition:opacity .3s}
-  .gas-icon.pop .cloud{animation:gasPopSm .8s ease-in forwards}
-  .gas-icon.pop .star{animation:starPopSm .8s ease-in forwards}
-  @keyframes gasPopSm{0%{transform:scale(1.3);opacity:.9;filter:blur(4px)}70%{transform:scale(.4);opacity:.6;filter:blur(2px)}100%{transform:scale(.05);opacity:0;filter:blur(0)}}
-  @keyframes starPopSm{0%,55%{opacity:0;transform:scale(.2) rotate(-45deg)}75%{opacity:1;transform:scale(1.3) rotate(8deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
-  .gas-plus{border:none;background:rgba(255,255,255,.18);color:#fff;width:20px;height:20px;border-radius:50%;
-    font-weight:800;font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0;flex:none}
-  .gas-plus:hover{background:rgba(255,255,255,.3)}
-  .gas-plus.ready{background:var(--yellow);color:#1b0f45;animation:readyPulse 1s ease-in-out infinite}
-  @keyframes readyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
-  .gas-bar{height:14px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin:10px 0 4px}
-  .gas-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff9fd0,var(--pink),#8b5cf6);border-radius:99px;transition:width .4s}
-  .gas-count{color:var(--muted);font-size:15px;margin:0 0 16px}
   .score-big{font-size:40px;font-weight:700;color:var(--yellow)}
   .record{color:var(--green);font-weight:600;margin-bottom:14px}
   .acc{color:var(--muted);font-weight:600;margin-bottom:10px;font-size:15px}
@@ -150,9 +136,8 @@
     <div class="mid">
       <span class="pill lives" id="lives"></span>
       <span class="pill gas-pill">
-        <span class="gas-icon" id="gasIcon"><span class="cloud"></span><span class="star">⭐</span></span>
+        <span class="gas-icon" id="gasIcon"><span class="cloud"></span></span>
         <span id="score">0</span>
-        <button class="gas-plus" id="gasTradeBtn" title="Trocar gás por estrela">+</button>
       </span>
       <span class="pill">✅ <span id="hits">0</span></span>
     </div>
@@ -252,21 +237,6 @@
   </div>
 </div>
 
-<!-- Troca de gás -->
-<div class="overlay hidden" id="gasOv">
-  <div class="box">
-    <div class="big">🌌</div>
-    <h2>Trocar gás por estrela</h2>
-    <p>O gás que você junta jogando fica guardado, mesmo se sair no meio da partida. Junte 5000 para trocar por uma estrela ⭐.</p>
-    <div class="gas-bar"><i id="gasBarFill"></i></div>
-    <p class="gas-count" id="gasCount">0 / 5000</p>
-    <div class="actions">
-      <button class="btn ghost" id="gasCloseBtn">Fechar</button>
-      <button class="btn" id="gasExchangeBtn">Trocar por ⭐</button>
-    </div>
-  </div>
-</div>
-
 <script>
 (function(){
   const GAME_ID = 'caca';
@@ -312,8 +282,7 @@
     ok(){ beep(784,.1,'triangle'); beep(1046,.15,'triangle',.14,.08); },
     bad(){ beep(220,.25,'sawtooth',.08); beep(160,.3,'sawtooth',.08,.1); },
     win(){ [523,659,784,1046,1318].forEach((f,i) => beep(f,.18,'triangle',.13,i*.1)); },
-    lose(){ [392,330,262,196].forEach((f,i) => beep(f,.25,'triangle',.12,i*.15)); },
-    star(){ beep(1318,.15,'sine',.13); beep(1568,.18,'sine',.1,.08); }
+    lose(){ [392,330,262,196].forEach((f,i) => beep(f,.25,'triangle',.12,i*.15)); }
   };
   const soundBtn = $('soundBtn');
   const paintSound = () => soundBtn.textContent = soundOn ? '🔊' : '🔇';
@@ -382,34 +351,9 @@
   const arena = $('arena');
 
   function paintGas(){
-    const icon = $('gasIcon');
-    if (!icon.classList.contains('pop')){
-      const frac = Math.min((totalGas % GAS_STAR_COST) / GAS_STAR_COST, 1);
-      icon.querySelector('.cloud').style.transform = `scale(${(.5 + frac * .8).toFixed(2)})`;
-    }
-    $('gasTradeBtn').classList.toggle('ready', totalGas >= GAS_STAR_COST);
+    const frac = Math.min((totalGas % GAS_STAR_COST) / GAS_STAR_COST, 1);
+    $('gasIcon').querySelector('.cloud').style.transform = `scale(${(.5 + frac * .8).toFixed(2)})`;
   }
-  function popGas(){
-    const icon = $('gasIcon');
-    sfx.star();
-    icon.classList.remove('pop'); void icon.offsetWidth; icon.classList.add('pop');
-    setTimeout(() => { icon.classList.remove('pop'); paintGas(); }, 850);
-  }
-  function paintGasModal(){
-    $('gasCount').textContent = `${totalGas} / ${GAS_STAR_COST}`;
-    $('gasBarFill').style.width = Math.min(totalGas / GAS_STAR_COST * 100, 100) + '%';
-    const can = totalGas >= GAS_STAR_COST;
-    $('gasExchangeBtn').style.opacity = can ? 1 : .5;
-    $('gasExchangeBtn').style.pointerEvents = can ? 'auto' : 'none';
-  }
-  $('gasTradeBtn').onclick = () => { sfx.click(); paintGasModal(); $('gasOv').classList.remove('hidden'); };
-  $('gasCloseBtn').onclick = () => { sfx.click(); $('gasOv').classList.add('hidden'); };
-  $('gasExchangeBtn').onclick = () => {
-    if (totalGas < GAS_STAR_COST) return;
-    totalGas -= GAS_STAR_COST;
-    const mine = readGasBank(); mine.gas = totalGas; mine.stars = (mine.stars || 0) + 1; writeGasBank(mine);
-    popGas(); paintGasModal();
-  };
 
   function paintHUD(){
     $('lives').innerHTML = [0,1,2].map(i => `<span class="${i < lives ? '' : 'lost'}">❤️</span>`).join('');
@@ -552,7 +496,6 @@
 
   function resetGame(){
     stop(); rIdx = 0; lives = 3; score = 0; combo = 0; hits = 0; tries = 0; current = null;
-    $('gasIcon').classList.remove('pop');
     arena.querySelectorAll('.meteor,.toast,.combo').forEach(e => e.remove());
     paintHUD(); paintCombo();
     ['endOv','pauseOv','exitOv'].forEach(id => $(id).classList.add('hidden'));

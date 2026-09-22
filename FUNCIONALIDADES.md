@@ -51,6 +51,8 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 | `showMap()` | Carrega o jogador salvo, calcula estrelas/patente/XP e desenha o mapa |
 | `launchBtn.onclick` | Valida o nome, salva o jogador e abre o mapa |
 | `exitBtn` / `stayBtn` / `leaveBtn` | Abrem/fecham o modal de saída e trocam de jogador |
+| `readGasBank()` / `writeGasBank(mine)` | Leem/gravam o banco de gás (`mq_gas`) do jogador atual |
+| `gasTradeBtn` / `gasExchangeBtn` | Abrem a tela de troca e convertem 5000 de gás em 1 estrela |
 
 ---
 
@@ -161,6 +163,6 @@ Mesmo padrão do jogo 1: **Início**, **Rodada** (com botão **🗺️ Mapa** ad
 Cada ponto ganho em qualquer um dos dois jogos também é somado a um **banco de gás persistente**, guardado por jogador (`mq_gas`, chave = nome em minúsculo, compartilhado entre Caça ao Conjunto e Diagrama de Venn).
 
 - **Nunca se perde**: diferente da pontuação da partida (que zera se você sair ou reiniciar), o gás é gravado no `localStorage` a cada acerto (`addGas(pts)`), então sair no meio de uma partida não desconta nada do banco.
-- **Visual**: o pill de pontuação do HUD mostra uma nuvem que cresce conforme o banco se aproxima de 5000; o botão **➕** ao lado fica destacado (pulsando em amarelo) quando o jogador já tem gás suficiente.
-- **Troca manual**: clicar no ➕ abre a tela "Trocar gás por estrela", com uma barra de progresso até 5000. O botão **Trocar por ⭐** só fica ativo com 5000+ de gás; cada troca desconta 5000 do banco, soma 1 à contagem de estrelas trocadas (`mq_gas[jogador].stars`) e dispara a mesma animação/som de "gás virando estrela".
-- **Reflexo no mapa**: as estrelas trocadas entram na soma do **⭐ totalStars** do mapa (`index.html`), juntando-se às estrelas de desempenho de cada jogo para calcular a patente e a barra de XP. Na tela final, cada estrela aparece primeiro como uma **nuvem de gás** colorida (nebulosa) que se condensa e "acende" virando a estrela ⭐; as estrelas não conquistadas ficam como uma nuvem esmaecida, sem se formar. A contagem (critérios de 0 a 3) não mudou — só a forma como o resultado é revelado.
+- **Visual em jogo**: o pill de pontuação do HUD, em ambos os jogos, mostra uma nuvem que cresce conforme o banco se aproxima de 5000 — é só um indicador, sem botão de troca ali.
+- **Troca manual no mapa**: o botão **➕** fica ao lado do **⭐ totalStars**, no topo do mapa (`index.html`), e pulsa em amarelo quando o jogador já tem gás suficiente. Clicar nele abre a tela "Trocar gás por estrela", com uma barra de progresso até 5000. O botão **Trocar por ⭐** só fica ativo com 5000+ de gás; cada troca desconta 5000 do banco, soma 1 à contagem de estrelas trocadas (`mq_gas[jogador].stars`) e toca o som de "estrela formada".
+- **Reflexo no mapa**: as estrelas trocadas entram na soma do **⭐ totalStars**, junto com as estrelas de desempenho de cada jogo, para calcular a patente e a barra de XP.
