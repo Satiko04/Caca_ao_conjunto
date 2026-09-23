@@ -9,6 +9,7 @@ Documento de referência com todas as telas, mecânicas e funções JavaScript d
 | [index.html](index.html) | Tela de login/avatar e mapa de seleção de jogos |
 | [caca-ao-conjunto.html](caca-ao-conjunto.html) | Jogo 1 — Caça ao Conjunto (meteoros) |
 | [diagrama-de-venn.html](diagrama-de-venn.html) | Jogo 2 — Diagrama de Venn (arrastar e soltar) |
+| [pocoes-magicas.html](pocoes-magicas.html) | Jogo 3 — Laboratório de Poções Mágicas (frações) |
 
 Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage`.
 
@@ -19,7 +20,7 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 | `mq_player` | `{ name, avatar }` do jogador atual |
 | `mq_sound` | `true`/`false` — som ligado/desligado |
 | `mq_progress` | `{ [nomeEmMinúsculo]: { [gameId]: { best, stars } } }` — recorde e estrelas por jogador e por jogo |
-| `mq_gas` | `{ [nomeEmMinúsculo]: { gas, stars } }` — banco de gás acumulado (compartilhado entre os dois jogos) e quantas estrelas já foram trocadas por esse jogador |
+| `mq_gas` | `{ [nomeEmMinúsculo]: { gas, stars } }` — banco de gás acumulado (compartilhado entre os três jogos) e quantas estrelas já foram trocadas por esse jogador |
 
 ---
 
@@ -34,8 +35,8 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 - Cabeçalho com avatar, nome e **patente** calculada a partir do total de estrelas (`RANKS`: Cadete Espacial → Explorador(a) Estelar → Piloto Galáctico → Comandante do Universo).
 - Barra de XP mostrando progresso até a próxima patente.
 - Contador de estrelas totais (`⭐ totalStars`) — soma as estrelas de desempenho dos jogos **e** as estrelas trocadas por gás (`mq_gas[jogador].stars`).
-- Card de cada jogo (`caca`, `venn`) com: estrelas conquistadas (0–3), recorde de pontos, selo **NOVO** quando ainda não jogado, e link para o jogo.
-- Sete planetas **bloqueados** da "Expedição Galáctica" (Místico — frações, Oceano — decimais, Jurássico — tabelas e gráficos, Máquina — fluxogramas, Carga da Nave — volume, Doce — massa, Extremos — temperatura), reservados para conteúdo futuro.
+- Card de cada jogo (`caca`, `venn`, `pocoes`) com: estrelas conquistadas (0–3), recorde de pontos, selo **NOVO** quando ainda não jogado, e link para o jogo.
+- Unidade 2 "Expedição Galáctica": o Planeta Místico (frações) já é jogável (`pocoes-magicas.html`); os outros seis planetas seguem **bloqueados** (Oceano — decimais, Jurássico — tabelas e gráficos, Máquina — fluxogramas, Carga da Nave — volume, Doce — massa, Extremos — temperatura), reservados para conteúdo futuro.
 - Botão de som (liga/desliga efeitos sonoros, salvo em `mq_sound`).
 - Botão **Sair** (`exitBtn`) → modal de confirmação → apaga `mq_player` e volta à tela de boas-vindas (troca de jogador).
 - Atualiza o mapa automaticamente ao voltar de um jogo pelo botão "voltar" do navegador (`pageshow`).
@@ -146,7 +147,46 @@ Mesmo padrão do jogo 1: **Início**, **Rodada** (com botão **🗺️ Mapa** ad
 
 ---
 
-## Mecânicas compartilhadas entre os dois jogos
+## pocoes-magicas.html — Laboratório de Poções Mágicas (jogo 3)
+
+**Mecânica:** exercícios de frações onde toda fração aparece desenhada num frasco/caldeirão dividido em partes iguais (nunca só como número em linha), e a resposta é montada com botões **+**/**−** para numerador e denominador, sem teclado.
+
+### Telas (overlays)
+Mesmo padrão dos outros jogos: **Início** ("Laboratório de Poções Mágicas"), **Nível** (introdução com ícone, explicação e um exemplo visual, com **🗺️ Mapa**), **Pausa**, **Sair** e **Fim** ("Poção lendária criada! 🏆" ou "O caldeirão esfriou...").
+
+### Níveis (6 poções cada)
+1. 🧪 Misturando ingredientes — adição com mesmo denominador (2 a 10).
+2. 🥄 Usando parte da poção — subtração com mesmo denominador.
+3. 🔮 Receitas de mestres — adição/subtração com denominadores diferentes; o aluno primeiro escolhe o denominador comum entre 3 opções, depois monta o resultado.
+4. 📜 Metade da receita — multiplicação ("metade de" ou "N × 1/den"), com modelo de área (grade colunas × linhas) para o caso fração × fração.
+5. 🍶 Enchendo frascos menores — divisão: tocar em frascos vazios para "enchê-los" e informar a quantidade (fração ÷ fração unitária), ou dividir uma fração entre N caldeirões (fração ÷ inteiro).
+
+### Mecânicas de jogo
+- Toda fração é renderizada como um frasco (`makeFlask`) com o número de traços igual ao denominador e o líquido preenchendo a fração do numerador, além do formato empilhado (`fracHTML`, numerador/traço/denominador).
+- Resposta livre de teclado: esteppers `+`/`−` para numerador e denominador (denominador travado quando o valor já é conhecido pelo enunciado, ex. níveis 1, 2 e a 2ª etapa do nível 3).
+- Aceita qualquer fração equivalente à correta (`fracEq`, por multiplicação cruzada); dá **+5 de bônus** e "Poção perfeita! 🌟" quando a resposta já está simplificada, senão mostra a forma simplificada como dica.
+- Sem repetir a mesma conta na mesma sessão de um nível (`uniqueGen`).
+- Botão **💡 Dica** por poção, sem custo.
+- Vidas, combo, HUD de gás/acertos e estrelas de resultado seguem o mesmo esquema dos outros dois jogos (3/2/1/0 estrelas conforme o nível alcançado).
+
+### Funções JavaScript principais
+
+| Função | O que faz |
+|---|---|
+| `genAdd` / `genSub` / `genMixed` / `genMul` / `genDiv` | Geram as poções de cada nível (um gerador por nível) |
+| `fracHTML(n, d)` | Monta o HTML da fração no formato empilhado |
+| `makeFlask(n, d, cor)` / `rebuildFlaskTicks` | Desenham o frasco/caldeirão e suas divisões |
+| `renderQuestion(Q)` | Decide qual visual e painel de resposta mostrar (steppers, escolha de denominador ou toque-para-encher) |
+| `renderAreaGrid` | Desenha o modelo de área (grade) da multiplicação |
+| `chooseDen(v)` | Valida a escolha do denominador comum (nível 3, etapa 1) |
+| `checkFractionAnswer()` / `checkTapfillAnswer()` | Validam a resposta montada nos steppers ou no toque-para-encher |
+| `renderExample(Q)` | Monta o exemplo visual da tela de introdução de cada nível |
+| `showRoundIntro()` / `startLevel()` / `resetGame()` | Controlam o fluxo entre telas e níveis |
+| `endGame(won)` | Calcula estrelas, salva recorde e mostra a tela final |
+
+---
+
+## Mecânicas compartilhadas entre os três jogos
 
 - **Som**: efeitos gerados via Web Audio API (sem arquivos de áudio), com botão 🔊/🔇 que persiste em `mq_sound`.
 - **Fundo estelar**: estrelas piscando geradas dinamicamente por JavaScript.

@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Laboratório de Poções Mágicas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#0b0730; --bg2:#1d1060; --ink:#fff; --muted:#bdb6ee;
+    --pink:#ff5fa2; --cyan:#35e0ff; --yellow:#ffd23f; --green:#4ef0a0; --purple:#8b5cf6; --red:#ff4d6d;
+    --card:rgba(255,255,255,.08); --line:rgba(255,255,255,.16);
+    --font:"Fredoka","Segoe UI Rounded","Trebuchet MS",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{background:#140b45}
+  html,body{margin:0;min-height:100%}
+  body{font-family:var(--font);color:var(--ink);min-height:100vh;overflow-x:hidden;
+    background:radial-gradient(ellipse at 20% 0%,#3a1c8f 0%,transparent 55%),radial-gradient(ellipse at 90% 100%,#0f4c7a 0%,transparent 50%),linear-gradient(180deg,var(--bg1),var(--bg2));
+    background-attachment:fixed;user-select:none;-webkit-user-select:none}
+  #stars{position:fixed;inset:0;pointer-events:none}
+  .star{position:absolute;background:#fff;border-radius:50%;animation:tw 3s infinite ease-in-out}
+  @keyframes tw{0%,100%{opacity:.25}50%{opacity:1}}
+  button{font-family:inherit;cursor:pointer}
+  .hidden{display:none!important}
+
+  .game{position:relative;max-width:600px;margin:0 auto;padding:12px 14px 20px;display:flex;flex-direction:column;gap:10px}
+
+  /* HUD */
+  .hud{display:flex;align-items:center;gap:8px}
+  .icon-btn{border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;border-radius:14px;height:44px;min-width:44px;padding:0 10px;font-size:18px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none}
+  .icon-btn:hover{background:rgba(255,255,255,.16)}
+  .hud .mid{flex:1;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
+  .pill{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-weight:700;font-size:17px;white-space:nowrap}
+  .lives span{display:inline-block;transition:.3s}
+  .lives .lost{filter:grayscale(1);opacity:.25;transform:scale(.8)}
+  .gas-pill{display:inline-flex;align-items:center;gap:6px}
+  .gas-icon{position:relative;width:20px;height:20px;flex:none}
+  .gas-icon .cloud{position:absolute;inset:-5px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#ff9fd0,#ff5fa2 40%,#8b5cf6 70%,transparent 80%);
+    filter:blur(3px);opacity:.85;transform:scale(.5);transition:transform .25s ease,opacity .3s}
+
+  .rule{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 12px;display:flex;align-items:center;gap:10px}
+  .rule .rn{background:var(--yellow);color:#1b0f45;font-weight:700;border-radius:12px;padding:4px 10px;font-size:14px;white-space:nowrap}
+  .rule .rt{font-weight:600;font-size:17px;flex:1}
+  .dots{display:flex;gap:4px}
+  .dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.2)}
+  .dots i.ok{background:var(--green)} .dots i.bad{background:var(--red)}
+
+  /* Fração empilhada */
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-weight:800;line-height:1.15;margin:0 3px}
+  .frac i{display:block;width:100%;min-width:14px;height:2px;background:currentColor;margin:2px 0}
+  .frac.mini{font-size:14px}
+
+  /* Laboratório */
+  .lab{position:relative;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:14px;align-items:center}
+  .recipe-text{text-align:center;font-size:17px;line-height:1.5}
+
+  .flask-row{display:flex;gap:16px;justify-content:center;align-items:flex-end;flex-wrap:wrap}
+  .given-flask,.example-row .given-flask{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .given-label{text-align:center;color:var(--muted);font-size:13px}
+  .flask{position:relative;width:52px;height:130px;border-radius:12px 12px 22px 22px;border:3px solid rgba(255,255,255,.5);background:rgba(255,255,255,.06);overflow:hidden;flex:none}
+  .given-flask.small .flask,.example-row .flask{width:38px;height:88px}
+  .flask-fill{position:absolute;left:0;right:0;bottom:0;height:0;transition:height .5s ease}
+  .flask-a .flask-fill{background:linear-gradient(180deg,#ff9fd0,#8b5cf6)}
+  .flask-b .flask-fill{background:linear-gradient(180deg,#7ff3ff,#1a7fb8)}
+  .flask-ans .flask-fill{background:linear-gradient(180deg,#ffe57a,var(--yellow))}
+  .flask-tick{position:absolute;left:0;right:0;height:2px;background:rgba(255,255,255,.35)}
+  .flask.success{animation:flaskGlow .7s ease}
+  @keyframes flaskGlow{0%,100%{box-shadow:none}50%{box-shadow:0 0 24px 6px rgba(255,210,63,.75)}}
+  .flask.shake{animation:flaskShake .4s}
+  @keyframes flaskShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+  .given-area{display:grid;gap:2px;width:100%;max-width:200px;aspect-ratio:1/1;margin:0 auto}
+  .given-area.small{max-width:120px}
+  .area-cell{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15)}
+  .area-cell.one{background:rgba(255,159,208,.35)}
+  .area-cell.both{background:linear-gradient(135deg,#ff9fd0,#8b5cf6)}
+
+  .den-choice{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .den-choice p{margin:0;color:var(--muted);text-align:center}
+  .den-options{display:flex;gap:10px}
+  .den-opt{border:2px solid var(--line);background:rgba(255,255,255,.08);color:#fff;border-radius:16px;padding:12px 20px;font-size:22px;font-weight:800;min-width:64px}
+  .den-opt:hover{background:rgba(255,255,255,.18)}
+  .den-opt.wrong{border-color:var(--red);animation:flaskShake .4s}
+  .den-opt.right{border-color:var(--green);background:rgba(78,240,160,.25)}
+
+  .answer-panel{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+  .answer-panel .flask{margin:0 auto}
+  .ans-frac-label{font-size:22px}
+  .steppers{display:flex;align-items:center;justify-content:center;gap:14px}
+  .stepper{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .stepper small{color:var(--muted);font-size:12px}
+  .step-row{display:flex;align-items:center;gap:8px}
+  .step-btn{border:none;background:rgba(255,255,255,.14);color:#fff;width:34px;height:34px;border-radius:10px;font-size:20px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+  .step-btn:hover{background:rgba(255,255,255,.24)}
+  .step-btn:disabled,.step-btn[style*="none"]{opacity:.35}
+  .step-val{min-width:34px;text-align:center;font-size:22px;font-weight:800}
+  .op-symbol{font-size:28px;font-weight:800;color:var(--muted)}
+  .mix-btn{min-width:200px}
+
+  .tapfill{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+  .tapfill p{margin:0;color:var(--muted);text-align:center}
+  .flask-targets{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .tap-flask{width:38px;height:70px;border-radius:8px 8px 16px 16px;border:3px solid rgba(255,255,255,.5);background:rgba(255,255,255,.06);padding:0}
+  .tap-flask.filled{background:linear-gradient(180deg,#ffe57a,var(--yellow))}
+  .tapfill-count{font-weight:700}
+
+  .combo-badge{position:absolute;right:12px;top:12px;background:linear-gradient(90deg,#ff9f43,var(--pink));border-radius:99px;padding:4px 12px;font-weight:700;font-size:15px}
+  .toast{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(0,0,0,.7);border:1px solid var(--line);border-radius:14px;padding:8px 14px;font-size:15px;font-weight:600;max-width:92%;text-align:center;animation:fadeIn .2s;pointer-events:none;z-index:5}
+  @keyframes fadeIn{from{opacity:0}}
+  .steam{position:absolute;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.55);filter:blur(3px);animation:steamUp .9s ease-out forwards;pointer-events:none}
+  @keyframes steamUp{from{transform:translate(-50%,0) scale(.6);opacity:.8}to{transform:translate(-50%,-60px) scale(1.4);opacity:0}}
+  .float{position:absolute;font-size:24px;transform:translate(-50%,0);animation:floatUp 1s forwards;pointer-events:none}
+  @keyframes floatUp{from{opacity:1}to{transform:translate(-50%,-50px);opacity:0}}
+
+  .hint-row{display:flex;justify-content:flex-end;width:100%}
+
+  /* Telas sobrepostas */
+  .overlay{position:fixed;inset:0;background:rgba(5,3,25,.78);display:grid;place-items:center;z-index:40;padding:16px;animation:fadeIn .2s}
+  .box{background:linear-gradient(180deg,#2a1878,#170c4a);border:2px solid var(--line);border-radius:26px;padding:24px;max-width:420px;width:100%;text-align:center;animation:pop .25s;max-height:92vh;overflow:auto}
+  @keyframes pop{from{transform:scale(.85)}}
+  .box .big{font-size:56px;line-height:1.1}
+  .box h2{margin:6px 0 8px;font-size:26px}
+  .box p{color:var(--muted);margin:0 0 14px;font-size:16px;line-height:1.4}
+  .box ul{text-align:left;color:var(--muted);padding-left:20px;margin:0 0 18px;line-height:1.5;font-size:16px}
+  .box ul b{color:#fff}
+  .sets-preview{display:flex;gap:8px;justify-content:center;margin:0 0 14px;flex-wrap:wrap}
+  .sets-preview span{border-radius:14px;padding:8px 12px;font-weight:600;color:#1b0f45}
+  .example-row{display:flex;gap:10px;justify-content:center;align-items:flex-end;flex-wrap:wrap}
+  .example-eq{font-size:24px;font-weight:800;color:var(--muted);align-self:center}
+  #rExample{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin:0 0 16px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{flex:1;border:none;border-radius:16px;padding:13px 18px;font-size:19px;font-weight:700;color:#1b0f45;min-width:130px;
+    background:linear-gradient(180deg,#ffe57a,var(--yellow));box-shadow:0 6px 0 #c79a12}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c79a12}
+  .btn.ghost{background:rgba(255,255,255,.1);color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.35);border:1px solid var(--line)}
+  .btn.danger{background:linear-gradient(180deg,#ff7b93,var(--red));color:#fff;box-shadow:0 6px 0 #a3203a}
+  .end-stars{font-size:52px;letter-spacing:4px;margin:4px 0 6px}
+  .end-stars span{display:inline-block;animation:starIn .5s both}
+  .end-stars .off{filter:grayscale(1);opacity:.25}
+  @keyframes starIn{from{transform:scale(0) rotate(-90deg)}}
+  .score-big{font-size:40px;font-weight:700;color:var(--yellow)}
+  .record{color:var(--green);font-weight:600;margin-bottom:8px}
+  .acc{color:var(--muted);font-weight:600;margin-bottom:10px;font-size:15px}
+  .confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:60;pointer-events:none;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+</style>
+</head>
+<body>
+<div id="stars"></div>
+
+<div class="game">
+  <div class="hud">
+    <button class="icon-btn" id="exitBtn" title="Sair">🚪</button>
+    <div class="mid">
+      <span class="pill lives" id="lives"></span>
+      <span class="pill gas-pill">
+        <span class="gas-icon" id="gasIcon"><span class="cloud"></span></span>
+        <span id="score">0</span>
+      </span>
+      <span class="pill">✅ <span id="hits">0</span></span>
+    </div>
+    <button class="icon-btn" id="pauseBtn" title="Pausar">⏸️</button>
+    <button class="icon-btn" id="soundBtn" title="Som">🔊</button>
+  </div>
+
+  <div class="rule">
+    <span class="rn" id="roundNum">Nível 1/5</span>
+    <span class="rt" id="roundText">Misturando ingredientes</span>
+    <div class="dots" id="dots"></div>
+  </div>
+
+  <div class="lab" id="lab">
+    <div class="hint-row"><button class="icon-btn" id="hintBtn" title="Dica">💡 Dica</button></div>
+    <p class="recipe-text" id="recipeText"></p>
+
+    <div class="flask-row" id="givenFlasks"></div>
+    <div class="given-area hidden" id="givenArea"></div>
+
+    <div class="den-choice hidden" id="denChoicePanel">
+      <p>Escolha um denominador comum para misturar as duas partes:</p>
+      <div class="den-options" id="denOptions"></div>
+    </div>
+
+    <div class="answer-panel hidden" id="stepperPanel">
+      <div class="flask flask-ans" id="answerFlask"><div class="flask-fill" id="answerFlaskFill"></div></div>
+      <div class="ans-frac-label" id="ansFracLabel"></div>
+      <div class="steppers">
+        <div class="stepper">
+          <small>numerador</small>
+          <div class="step-row">
+            <button class="step-btn" id="numMinus">−</button>
+            <div class="step-val" id="numVal">0</div>
+            <button class="step-btn" id="numPlus">+</button>
+          </div>
+        </div>
+        <div class="op-symbol">/</div>
+        <div class="stepper">
+          <small>denominador</small>
+          <div class="step-row">
+            <button class="step-btn" id="denMinus">−</button>
+            <div class="step-val" id="denVal">2</div>
+            <button class="step-btn" id="denPlus">+</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn mix-btn" id="mixBtn">Misturar! ✨</button>
+    </div>
+
+    <div class="tapfill hidden" id="tapfillPanel">
+      <p>Toque nos frascos vazios para enchê-los:</p>
+      <div class="flask-targets" id="flaskTargets"></div>
+      <div class="tapfill-count">Frascos cheios: <b id="filledCount">0</b></div>
+      <button class="btn" id="confirmFillBtn">Confirmar quantidade ✅</button>
+    </div>
+  </div>
+</div>
+
+<!-- Início -->
+<div class="overlay" id="startOv">
+  <div class="box">
+    <div class="big">🧙</div>
+    <h2>Laboratório de Poções Mágicas</h2>
+    <p id="hello">Aprenda frações misturando poções mágicas!</p>
+    <ul>
+      <li>Toda fração aparece <b>desenhada</b> num frasco, não só como número.</li>
+      <li>Monte sua resposta com os botões <b>+</b> e <b>−</b> e confirme com "Misturar!".</li>
+      <li>Fração equivalente conta como certa, mas <b>simplificada</b> vale um bônus extra.</li>
+      <li>Errou? Perde uma vida ❤️ e vê a explicação da conta.</li>
+    </ul>
+    <div class="actions">
+      <button class="btn ghost" id="backBtn0">🗺️ Mapa</button>
+      <button class="btn" id="startBtn">Começar ✨</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nível -->
+<div class="overlay hidden" id="roundOv">
+  <div class="box">
+    <div class="big" id="rIcon">🪐</div>
+    <h2 id="rTitle">Nível 1</h2>
+    <p id="rDesc"></p>
+    <div id="rExample"></div>
+    <div class="actions">
+      <button class="btn ghost" id="backBtn1">🗺️ Mapa</button>
+      <button class="btn" id="goBtn">Estou pronto(a)! ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pausa -->
+<div class="overlay hidden" id="pauseOv">
+  <div class="box">
+    <div class="big">⏸️</div>
+    <h2>Jogo pausado</h2>
+    <p>O caldeirão espera por você.</p>
+    <div class="actions">
+      <button class="btn ghost" id="restartBtn">🔄 Reiniciar</button>
+      <button class="btn" id="resumeBtn">Continuar ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sair -->
+<div class="overlay hidden" id="exitOv">
+  <div class="box">
+    <div class="big">🚪</div>
+    <h2>Sair da missão?</h2>
+    <p>Os pontos desta partida não serão salvos.</p>
+    <div class="actions">
+      <button class="btn ghost" id="stayBtn">Continuar jogando</button>
+      <button class="btn danger" id="leaveBtn">Sair</button>
+    </div>
+  </div>
+</div>
+
+<!-- Fim -->
+<div class="overlay hidden" id="endOv">
+  <div class="box">
+    <div class="big" id="endIcon">🏆</div>
+    <h2 id="endTitle">Poção lendária criada! 🏆</h2>
+    <div class="end-stars" id="endStars"></div>
+    <div class="score-big"><span id="finalScore">0</span> pontos</div>
+    <div class="record" id="record"></div>
+    <div class="acc" id="accuracy"></div>
+    <p id="endDesc"></p>
+    <div class="actions">
+      <button class="btn ghost" id="mapBtn">🗺️ Mapa</button>
+      <button class="btn" id="againBtn">Jogar de novo 🔄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const GAME_ID = 'pocoes';
+  const $ = id => document.getElementById(id);
+
+  // ---------- Armazenamento ----------
+  const store = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+  const player = store.get('mq_player', null);
+
+  // ---------- Banco de gás (persistente, por jogador) ----------
+  const GAS_STAR_COST = 5000;
+  const gasKey = player ? player.name.toLowerCase() : null;
+  function readGasBank(){ return gasKey ? (store.get('mq_gas', {})[gasKey] || { gas:0, stars:0 }) : { gas:0, stars:0 }; }
+  function writeGasBank(mine){
+    if (!gasKey) return;
+    const bank = store.get('mq_gas', {});
+    bank[gasKey] = mine; store.set('mq_gas', bank);
+  }
+  let totalGas = readGasBank().gas;
+  function addGas(amount){
+    if (!gasKey) return;
+    const mine = readGasBank(); mine.gas += amount; writeGasBank(mine);
+    totalGas = mine.gas;
+  }
+
+  // ---------- Sons ----------
+  let soundOn = store.get('mq_sound', true), actx = null;
+  function beep(f, d, type, vol, delay){
+    if (!soundOn) return;
+    try{
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = actx.currentTime + (delay || 0), o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
+      g.gain.setValueAtTime(vol || .14, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d);
+    }catch(e){}
+  }
+  const sfx = {
+    click(){ beep(660,.08,'triangle',.1); },
+    ok(){ beep(784,.1,'triangle'); beep(1046,.15,'triangle',.14,.08); },
+    bad(){ beep(220,.25,'sawtooth',.08); beep(160,.3,'sawtooth',.08,.1); },
+    win(){ [523,659,784,1046,1318].forEach((f,i) => beep(f,.18,'triangle',.13,i*.1)); },
+    lose(){ [392,330,262,196].forEach((f,i) => beep(f,.25,'triangle',.12,i*.15)); }
+  };
+  const soundBtn = $('soundBtn');
+  const paintSound = () => soundBtn.textContent = soundOn ? '🔊' : '🔇';
+  soundBtn.onclick = () => { soundOn = !soundOn; store.set('mq_sound', soundOn); paintSound(); sfx.click(); };
+  paintSound();
+
+  // ---------- Estrelas de fundo ----------
+  for (let i = 0; i < 70; i++){
+    const s = document.createElement('span'), z = Math.random() < .15 ? 3 : 2;
+    s.className = 'star';
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${z}px;height:${z}px;animation-delay:${Math.random()*3}s`;
+    $('stars').appendChild(s);
+  }
+
+  // ---------- Utilidades ----------
+  const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const pick = arr => arr[rnd(0, arr.length - 1)];
+  function pickTwo(arr){ const a = pick(arr); let b; do { b = pick(arr); } while (b === a); return [a, b]; }
+  function gcdOf(a, b){ a = Math.abs(a); b = Math.abs(b); while (b){ [a, b] = [b, a % b]; } return a || 1; }
+  function lcmOf(a, b){ return Math.abs(a * b) / gcdOf(a, b); }
+  function simplifyFrac(n, d){ if (n === 0) return [0, 1]; const g = gcdOf(n, d); return [n / g, d / g]; }
+  function fracEq(n1, d1, n2, d2){ return d1 > 0 && d2 > 0 && n1 * d2 === n2 * d1; }
+  function fracHTML(n, d, cls){ return `<span class="frac ${cls||''}"><b>${n}</b><i></i><b>${d}</b></span>`; }
+  function uniqueGen(fn){
+    const used = new Set();
+    return () => { let it, tries = 0; do { it = fn(); tries++; } while (used.has(it.key) && tries < 50); used.add(it.key); return it; };
+  }
+
+  const INGREDIENTS = ['lágrima de dragão','orvalho lunar','pó de fada','essência de fênix','néctar de unicórnio','poeira de cometa','pólen de flor-noturna','escama de sereia'];
+  const ACTIONS = ['curar um sapo encantado','acalmar um dragão bebê','ajudar uma fada resfriada','fazer um gnomo parar de soluçar','curar o soluço de um troll','acordar um unicórnio sonolento'];
+
+  // ---------- Geradores de poções ----------
+  function genAdd(){
+    const den = rnd(2, 10);
+    const a = rnd(1, den - 1);
+    const b = rnd(1, den - a);
+    const [i1, i2] = pickTwo(INGREDIENTS);
+    return {
+      mode:'stepper-locked', lockDen: den, opSymbol:'+',
+      text:`Coloque ${fracHTML(a, den)} de ${i1} e ${fracHTML(b, den)} de ${i2} no caldeirão.`,
+      given:[{n:a, d:den, label:i1, color:'a'}, {n:b, d:den, label:i2, color:'b'}],
+      ansN: a + b, ansD: den,
+      hint:`Some só os numeradores: ${a} + ${b} = ${a + b}. O denominador continua ${den}.`,
+      explain:`${a}/${den} + ${b}/${den} = ${a+b}/${den}, porque ${a} partes + ${b} partes = ${a+b} partes de ${den}-avos.`,
+      key:`add-${den}-${a}-${b}`
+    };
+  }
+
+  function genSub(){
+    const den = rnd(2, 10);
+    const start = rnd(2, den);
+    const used = rnd(1, start - 1);
+    const action = pick(ACTIONS);
+    return {
+      mode:'stepper-locked', lockDen: den, opSymbol:'−',
+      text:`O caldeirão tem ${fracHTML(start, den)} de poção. Você usou ${fracHTML(used, den)} para ${action}. Quanto sobrou?`,
+      given:[{n:start, d:den, label:'no caldeirão', color:'a'}],
+      ansN: start - used, ansD: den,
+      hint:`Tire as partes usadas: ${start} − ${used} = ${start-used}. O denominador continua ${den}.`,
+      explain:`${start}/${den} − ${used}/${den} = ${start-used}/${den}, porque ${start} partes − ${used} partes = ${start-used} partes de ${den}-avos.`,
+      key:`sub-${den}-${start}-${used}`
+    };
+  }
+
+  function genMixed(){
+    const dens = [2,3,4,5,6,8,10,12];
+    let d1, d2, L;
+    do { d1 = pick(dens); d2 = pick(dens); L = lcmOf(d1, d2); } while (d1 === d2 || L > 24);
+    let n1 = rnd(1, d1 - 1), n2 = rnd(1, d2 - 1);
+    let op = Math.random() < .5 ? '+' : '-';
+    if (op === '-'){
+      let tries = 0;
+      while (n1 * d2 <= n2 * d1 && tries < 20){ n1 = rnd(1, d1 - 1); tries++; }
+      if (n1 * d2 <= n2 * d1) op = '+';
+    }
+    const eq1 = n1 * (L / d1), eq2 = n2 * (L / d2);
+    const ansN = op === '+' ? eq1 + eq2 : eq1 - eq2, ansD = L;
+    const [i1, i2] = pickTwo(INGREDIENTS);
+    const distractors = [];
+    let guard = 0;
+    while (distractors.length < 2 && guard < 40){
+      guard++;
+      const x = L + (rnd(0,1) ? 1 : -1) * rnd(1, 5);
+      if (x > 1 && !(x % d1 === 0 && x % d2 === 0) && x !== L && !distractors.includes(x)) distractors.push(x);
+    }
+    while (distractors.length < 2) distractors.push(L + distractors.length + 3);
+    const denOptions = [L, ...distractors].sort(() => Math.random() - .5);
+    return {
+      mode:'choose-den', d1, d2, n1, n2, op, L, eq1, eq2, denOptions, opSymbol: op === '+' ? '+' : '−',
+      text:`Misture ${fracHTML(n1, d1)} de ${i1} ${op === '+' ? 'com' : 'menos'} ${fracHTML(n2, d2)} de ${i2}.`,
+      given:[{n:n1, d:d1, label:i1, color:'a'}, {n:n2, d:d2, label:i2, color:'b'}],
+      ansN, ansD,
+      hint:`Ache um múltiplo comum de ${d1} e ${d2}. Dica: ${d1} × ${d2 / gcdOf(d1,d2)} funciona.`,
+      explain: op === '+'
+        ? `${n1}/${d1} + ${n2}/${d2} = ${eq1}/${L} + ${eq2}/${L} = ${ansN}/${L}, porque primeiro deixamos as partes do mesmo tamanho (denominador ${L}).`
+        : `${n1}/${d1} − ${n2}/${d2} = ${eq1}/${L} − ${eq2}/${L} = ${ansN}/${L}, porque primeiro deixamos as partes do mesmo tamanho (denominador ${L}).`,
+      key:`mix-${d1}-${d2}-${n1}-${n2}-${op}`
+    };
+  }
+
+  function genMul(){
+    const sub = Math.random() < .6 ? 'half' : 'times';
+    const ing = pick(INGREDIENTS);
+    if (sub === 'half'){
+      const d = pick([3,4,5,6,8]);
+      const n = rnd(1, d - 1);
+      return {
+        mode:'stepper-free', sub, opSymbol:'×',
+        text:`A receita pede ${fracHTML(n, d)} de ${ing}, mas você vai fazer só metade. Quanto usar?`,
+        area:{ n1:1, d1:2, n2:n, d2:d },
+        ansN:n, ansD:d * 2,
+        hint:`"Metade de" é multiplicar por 1/2: numerador × numerador e denominador × denominador.`,
+        explain:`1/2 × ${n}/${d} = ${n}/${d*2}, porque multiplicamos numerador × numerador e denominador × denominador.`,
+        key:`half-${n}-${d}`
+      };
+    }
+    const den = pick([3,4,5,6,8]);
+    const times = rnd(2, 4);
+    return {
+      mode:'stepper-free', sub, opSymbol:'×',
+      text:`A receita pede ${times} colheres de ${fracHTML(1, den)} de ${ing}. Quanto é isso ao todo?`,
+      given: Array.from({length: times}, () => ({n:1, d:den, label:'', color:'a'})),
+      ansN: times, ansD: den,
+      hint:`Somar ${times} vezes 1/${den} é o mesmo que multiplicar: ${times} × 1/${den}.`,
+      explain:`${times} × 1/${den} = ${times}/${den}, porque juntamos ${times} partes de ${den}-avos.`,
+      key:`times-${times}-${den}`
+    };
+  }
+
+  function genDiv(){
+    const sub = Math.random() < .6 ? 'fill' : 'split';
+    if (sub === 'fill'){
+      const den = pick([2,3,4,5,6]);
+      const k = rnd(2, 4);
+      const maxNum = Math.max(1, Math.min(den - 1, Math.floor(8 / k)));
+      let num = rnd(1, maxNum);
+      while (num > 1 && gcdOf(num, den) !== 1) num--;
+      const flaskDen = den * k, count = num * k;
+      return {
+        mode:'tapfill', sub, opSymbol:'÷',
+        text:`Você tem ${fracHTML(num, den)} de litro de poção e frascos de ${fracHTML(1, flaskDen)}. Quantos frascos consegue encher?`,
+        given:[{n:num, d:den, label:'poção total', color:'a'}],
+        flaskDen, count, slots: Math.min(count + 3, 10),
+        ansN: count, ansD: 1,
+        hint:`Veja quantas vezes 1/${flaskDen} cabe em ${num}/${den}.`,
+        explain:`${num}/${den} ÷ 1/${flaskDen} = ${count}, porque ${num}/${den} equivale a ${count}/${flaskDen}, ou seja, ${count} frascos de 1/${flaskDen}.`,
+        key:`fill-${num}-${den}-${flaskDen}`
+      };
+    }
+    const den = pick([2,3,4,5,6,8]);
+    let num; do { num = rnd(1, den - 1); } while (gcdOf(num, den) !== 1);
+    const splitBy = rnd(2, 4);
+    return {
+      mode:'stepper-free', sub, opSymbol:'÷',
+      text:`Divida ${fracHTML(num, den)} da poção igualmente entre ${splitBy} caldeirões. Quanto vai em cada um?`,
+      given:[{n:num, d:den, label:'poção total', color:'a'}],
+      splitBy, ansN:num, ansD: den * splitBy,
+      hint:`Dividir por ${splitBy} é multiplicar o denominador por ${splitBy}.`,
+      explain:`${num}/${den} ÷ ${splitBy} = ${num}/${den*splitBy}, porque cada caldeirão recebe uma parte ${splitBy} vezes menor.`,
+      key:`split-${num}-${den}-${splitBy}`
+    };
+  }
+
+  const LEVELS = [
+    { icon:'🧪', title:'Misturando ingredientes',
+      desc:'Quando as partes têm o mesmo tamanho, some só os numeradores.',
+      count:6, gen:genAdd },
+    { icon:'🥄', title:'Usando parte da poção',
+      desc:'Tire as partes usadas; o tamanho das partes (denominador) não muda.',
+      count:6, gen:genSub },
+    { icon:'🔮', title:'Receitas de mestres',
+      desc:'Antes de misturar, as partes precisam ter o mesmo tamanho. Procure um múltiplo comum dos denominadores.',
+      count:6, gen:genMixed },
+    { icon:'📜', title:'Metade da receita',
+      desc:'"Metade de" é multiplicar por 1/2. Multiplique numerador com numerador e denominador com denominador.',
+      count:6, gen:genMul },
+    { icon:'🍶', title:'Enchendo frascos menores',
+      desc:'Quantas vezes o frasco pequeno cabe na poção grande?',
+      count:6, gen:genDiv }
+  ];
+
+  // ---------- Estado ----------
+  let lIdx = 0, lives = 3, score = 0, combo = 0, done = 0;
+  let hits = 0, tries = 0;
+  let current = null, genFn = null, denLocked = false, ansN = 0, ansD = 2;
+  let filledFlasks = 0, playing = false, paused = false, busy = false;
+
+  function paintGas(){
+    const frac = Math.min((totalGas % GAS_STAR_COST) / GAS_STAR_COST, 1);
+    $('gasIcon').querySelector('.cloud').style.transform = `scale(${(.5 + frac * .8).toFixed(2)})`;
+  }
+  function paintHUD(){
+    $('lives').innerHTML = [0,1,2].map(i => `<span class="${i < lives ? '' : 'lost'}">❤️</span>`).join('');
+    $('hits').textContent = hits;
+    $('score').textContent = score;
+    paintGas();
+  }
+  function paintCombo(){
+    const old = document.querySelector('.combo-badge'); if (old) old.remove();
+    if (combo >= 3){ const c = document.createElement('div'); c.className = 'combo-badge'; c.textContent = `🔥 Combo x${combo}`; $('lab').appendChild(c); }
+  }
+  function markDot(ok){ const d = $('dots').children[done]; if (d) d.className = ok ? 'ok' : 'bad'; }
+  function paintRule(){
+    const L = LEVELS[lIdx];
+    $('roundNum').textContent = `Nível ${lIdx + 1}/${LEVELS.length}`;
+    $('roundText').textContent = L.title;
+    $('dots').innerHTML = Array.from({length: L.count}, () => '<i></i>').join('');
+  }
+
+  function toast(txt){
+    $('lab').querySelectorAll('.toast').forEach(t => t.remove());
+    const t = document.createElement('div'); t.className = 'toast'; t.textContent = txt;
+    $('lab').appendChild(t); setTimeout(() => t.remove(), 2200);
+  }
+  function floatSteam(flaskEl){
+    const r = flaskEl.getBoundingClientRect(), lr = $('lab').getBoundingClientRect();
+    const cx = r.left - lr.left + r.width / 2, cy = r.top - lr.top;
+    for (let i = 0; i < 3; i++){
+      const s = document.createElement('div'); s.className = 'steam';
+      s.style.left = (cx + (i - 1) * 10) + 'px'; s.style.top = cy + 'px';
+      s.style.animationDelay = (i * .1) + 's';
+      $('lab').appendChild(s); setTimeout(() => s.remove(), 1000);
+    }
+    const f = document.createElement('div'); f.className = 'float'; f.textContent = '✨';
+    f.style.left = cx + 'px'; f.style.top = cy + 'px';
+    $('lab').appendChild(f); setTimeout(() => f.remove(), 1000);
+  }
+
+  function makeFlask(n, d, colorClass){
+    const el = document.createElement('div');
+    el.className = 'flask ' + (colorClass || 'flask-a');
+    const fill = document.createElement('div');
+    fill.className = 'flask-fill';
+    fill.style.height = Math.min(100, d > 0 ? n / d * 100 : 0) + '%';
+    el.appendChild(fill);
+    for (let i = 1; i < d; i++){
+      const t = document.createElement('div'); t.className = 'flask-tick';
+      t.style.bottom = (i / d * 100) + '%'; el.appendChild(t);
+    }
+    return el;
+  }
+  function rebuildFlaskTicks(flaskEl, den){
+    flaskEl.querySelectorAll('.flask-tick').forEach(t => t.remove());
+    for (let i = 1; i < den; i++){
+      const t = document.createElement('div'); t.className = 'flask-tick';
+      t.style.bottom = (i / den * 100) + '%'; flaskEl.appendChild(t);
+    }
+  }
+  function renderGivenFlasks(list){
+    const box = $('givenFlasks'); box.innerHTML = '';
+    list.forEach(item => {
+      const wrap = document.createElement('div'); wrap.className = 'given-flask';
+      wrap.appendChild(makeFlask(item.n, item.d, 'flask-' + (item.color || 'a')));
+      const cap = document.createElement('div'); cap.className = 'given-label';
+      cap.innerHTML = item.label ? `${fracHTML(item.n, item.d, 'mini')}<br><small>${item.label}</small>` : fracHTML(item.n, item.d, 'mini');
+      wrap.appendChild(cap);
+      box.appendChild(wrap);
+    });
+  }
+  function renderAreaGrid(container, A){
+    container.innerHTML = '';
+    container.style.gridTemplateColumns = `repeat(${A.d1}, 1fr)`;
+    container.style.gridTemplateRows = `repeat(${A.d2}, 1fr)`;
+    for (let r = 0; r < A.d2; r++){
+      for (let c = 0; c < A.d1; c++){
+        const cell = document.createElement('div'); cell.className = 'area-cell';
+        const colShaded = c < A.n1, rowShaded = r < A.n2;
+        if (colShaded && rowShaded) cell.classList.add('both');
+        else if (colShaded || rowShaded) cell.classList.add('one');
+        container.appendChild(cell);
+      }
+    }
+  }
+
+  function paintAnswer(){
+    $('numVal').textContent = ansN;
+    $('denVal').textContent = ansD;
+    $('ansFracLabel').innerHTML = fracHTML(ansN, ansD);
+    $('answerFlaskFill').style.height = Math.min(100, ansD > 0 ? ansN / ansD * 100 : 0) + '%';
+  }
+  function setupStepper(mode, lockDenVal){
+    denLocked = mode === 'stepper-locked';
+    ansD = denLocked ? lockDenVal : 2;
+    ansN = 0;
+    $('denMinus').style.opacity = denLocked ? .35 : 1;
+    $('denPlus').style.opacity = denLocked ? .35 : 1;
+    $('denMinus').style.pointerEvents = denLocked ? 'none' : 'auto';
+    $('denPlus').style.pointerEvents = denLocked ? 'none' : 'auto';
+    rebuildFlaskTicks($('answerFlask'), ansD);
+    paintAnswer();
+  }
+  $('numMinus').onclick = () => { if (busy) return; ansN = Math.max(0, ansN - 1); paintAnswer(); };
+  $('numPlus').onclick = () => { if (busy) return; ansN = Math.min(40, ansN + 1); paintAnswer(); };
+  $('denMinus').onclick = () => { if (busy || denLocked) return; ansD = Math.max(1, ansD - 1); rebuildFlaskTicks($('answerFlask'), ansD); paintAnswer(); };
+  $('denPlus').onclick = () => { if (busy || denLocked) return; ansD = Math.min(40, ansD + 1); rebuildFlaskTicks($('answerFlask'), ansD); paintAnswer(); };
+
+  function setupTapfill(Q){
+    filledFlasks = 0;
+    const box = $('flaskTargets'); box.innerHTML = '';
+    for (let i = 0; i < Q.slots; i++){
+      const f = document.createElement('button'); f.className = 'tap-flask'; f.type = 'button';
+      f.onclick = () => {
+        if (busy) return;
+        f.classList.toggle('filled');
+        filledFlasks = box.querySelectorAll('.filled').length;
+        $('filledCount').textContent = filledFlasks;
+      };
+      box.appendChild(f);
+    }
+    $('filledCount').textContent = '0';
+  }
+
+  function renderQuestion(Q){
+    $('recipeText').innerHTML = Q.text;
+    $('givenFlasks').innerHTML = ''; $('givenFlasks').classList.add('hidden');
+    $('givenArea').innerHTML = ''; $('givenArea').classList.add('hidden');
+    $('denChoicePanel').classList.add('hidden');
+    $('stepperPanel').classList.add('hidden');
+    $('tapfillPanel').classList.add('hidden');
+
+    if (Q.mode === 'choose-den'){
+      renderGivenFlasks(Q.given); $('givenFlasks').classList.remove('hidden');
+      $('denChoicePanel').classList.remove('hidden');
+      $('denOptions').innerHTML = Q.denOptions.map(o => `<button class="den-opt" data-v="${o}">${o}</button>`).join('');
+      [...document.querySelectorAll('.den-opt')].forEach(b => b.onclick = () => chooseDen(+b.dataset.v));
+      return;
+    }
+    if (Q.area){
+      renderAreaGrid($('givenArea'), Q.area); $('givenArea').classList.remove('hidden');
+    } else if (Q.given){
+      renderGivenFlasks(Q.given); $('givenFlasks').classList.remove('hidden');
+    }
+    if (Q.mode === 'tapfill'){
+      setupTapfill(Q); $('tapfillPanel').classList.remove('hidden');
+    } else {
+      setupStepper(Q.mode, Q.lockDen); $('stepperPanel').classList.remove('hidden');
+    }
+  }
+
+  function chooseDen(v){
+    if (busy || !playing || paused) return;
+    const Q = current;
+    if (v === Q.L){
+      sfx.click();
+      renderGivenFlasks([{n:Q.eq1, d:Q.L, label:'', color:'a'}, {n:Q.eq2, d:Q.L, label:'', color:'b'}]);
+      $('denChoicePanel').classList.add('hidden');
+      setupStepper('stepper-locked', Q.L);
+      $('stepperPanel').classList.remove('hidden');
+    } else {
+      busy = true; tries++; combo = 0; lives--; sfx.bad();
+      const btn = document.querySelector(`.den-opt[data-v="${v}"]`); if (btn) btn.classList.add('wrong');
+      toast('Ops! ' + Q.explain);
+      markDot(false); paintHUD(); paintCombo();
+      next(1500);
+    }
+  }
+
+  function checkFractionAnswer(){
+    if (busy || !playing || paused) return;
+    busy = true; tries++;
+    const Q = current;
+    const ok = fracEq(ansN, ansD, Q.ansN, Q.ansD) && ansD > 0;
+    if (ok){
+      hits++; combo++;
+      const [sN, sD] = simplifyFrac(ansN, ansD);
+      const isSimplified = sN === ansN && sD === ansD;
+      const pts = 10 + (combo >= 3 ? 5 : 0) + (isSimplified ? 5 : 0);
+      score += pts; addGas(pts); sfx.ok();
+      $('answerFlask').classList.add('success');
+      floatSteam($('answerFlask'));
+      toast(isSimplified ? `Poção perfeita! 🌟 +${pts}` : `Certo! Dá para simplificar para ${sN}/${sD} (+${pts})`);
+      markDot(true);
+    } else {
+      combo = 0; lives--; sfx.bad();
+      $('answerFlask').classList.add('shake');
+      toast('Ops! ' + Q.explain);
+      markDot(false);
+    }
+    paintHUD(); paintCombo();
+    setTimeout(() => $('answerFlask').classList.remove('success', 'shake'), 700);
+    next(ok ? 1100 : 1600);
+  }
+  $('mixBtn').onclick = () => { sfx.click(); checkFractionAnswer(); };
+
+  function checkTapfillAnswer(){
+    if (busy || !playing || paused) return;
+    busy = true; tries++;
+    const Q = current;
+    const ok = filledFlasks === Q.count;
+    if (ok){
+      hits++; combo++;
+      const pts = 10 + (combo >= 3 ? 5 : 0);
+      score += pts; addGas(pts); sfx.ok();
+      floatSteam($('flaskTargets').lastElementChild || $('lab'));
+      toast(`Certo! São ${Q.count} frascos. (+${pts})`);
+      markDot(true);
+    } else {
+      combo = 0; lives--; sfx.bad();
+      toast('Ops! ' + Q.explain);
+      markDot(false);
+    }
+    paintHUD(); paintCombo();
+    next(ok ? 1000 : 1600);
+  }
+  $('confirmFillBtn').onclick = () => { sfx.click(); checkTapfillAnswer(); };
+
+  function nextQuestion(){
+    current = genFn();
+    busy = false;
+    renderQuestion(current);
+  }
+  function next(delay){
+    setTimeout(() => {
+      done++;
+      if (lives <= 0) return endGame(false);
+      if (done >= LEVELS[lIdx].count){
+        lIdx++;
+        if (lIdx >= LEVELS.length) return endGame(true);
+        sfx.win(); showRoundIntro(); return;
+      }
+      nextQuestion();
+    }, delay);
+  }
+
+  $('hintBtn').onclick = () => { if (current) toast('💡 ' + current.hint); };
+
+  function renderExample(Q){
+    const box = $('rExample'); box.innerHTML = '';
+    const row = document.createElement('div'); row.className = 'example-row';
+    if (Q.area){
+      const g = document.createElement('div'); g.className = 'given-area small';
+      renderAreaGrid(g, Q.area); row.appendChild(g);
+    } else if (Q.given){
+      Q.given.forEach(item => {
+        const w = document.createElement('div'); w.className = 'given-flask small';
+        w.appendChild(makeFlask(item.n, item.d, 'flask-' + (item.color || 'a')));
+        const cap = document.createElement('div'); cap.className = 'given-label'; cap.innerHTML = fracHTML(item.n, item.d, 'mini');
+        w.appendChild(cap); row.appendChild(w);
+      });
+    }
+    box.appendChild(row);
+    const eq = document.createElement('div'); eq.className = 'example-eq'; eq.textContent = Q.mode === 'tapfill' ? '=' : Q.opSymbol;
+    box.appendChild(eq);
+    if (Q.mode === 'tapfill'){
+      const r2 = document.createElement('div'); r2.className = 'example-row';
+      for (let i = 0; i < Math.min(Q.count, 6); i++){
+        const w = document.createElement('div'); w.className = 'given-flask small';
+        w.appendChild(makeFlask(1, 1, 'flask-ans')); r2.appendChild(w);
+      }
+      box.appendChild(r2);
+      const capAll = document.createElement('div'); capAll.className = 'given-label'; capAll.textContent = `${Q.count} frascos`;
+      box.appendChild(capAll);
+    } else {
+      const w = document.createElement('div'); w.className = 'given-flask small';
+      w.appendChild(makeFlask(Q.ansN, Q.ansD, 'flask-ans'));
+      const cap = document.createElement('div'); cap.className = 'given-label'; cap.innerHTML = fracHTML(Q.ansN, Q.ansD, 'mini');
+      w.appendChild(cap); box.appendChild(w);
+    }
+  }
+
+  function showRoundIntro(){
+    const L = LEVELS[lIdx];
+    paintRule();
+    $('rIcon').textContent = L.icon;
+    $('rTitle').textContent = `Nível ${lIdx + 1}: ${L.title}`;
+    $('rDesc').textContent = L.desc;
+    renderExample(L.gen());
+    $('roundOv').classList.remove('hidden');
+  }
+  function startLevel(){
+    $('roundOv').classList.add('hidden');
+    done = 0; genFn = uniqueGen(LEVELS[lIdx].gen);
+    paintRule();
+    playing = true; paused = false;
+    nextQuestion();
+  }
+  function resetGame(){
+    lIdx = 0; lives = 3; score = 0; combo = 0; hits = 0; tries = 0; done = 0;
+    playing = false; paused = false;
+    paintHUD(); paintCombo();
+    ['endOv','pauseOv','exitOv'].forEach(id => $(id).classList.add('hidden'));
+    showRoundIntro();
+  }
+
+  function pause(){ if (!playing) return; paused = true; $('pauseOv').classList.remove('hidden'); }
+  function resume(){ paused = false; $('pauseOv').classList.add('hidden'); }
+  $('pauseBtn').onclick = () => { sfx.click(); pause(); };
+  $('resumeBtn').onclick = () => { sfx.click(); resume(); };
+  $('restartBtn').onclick = () => { sfx.click(); resetGame(); };
+  $('exitBtn').onclick = () => { sfx.click(); $('exitOv').classList.remove('hidden'); };
+  $('stayBtn').onclick = () => { sfx.click(); $('exitOv').classList.add('hidden'); };
+  $('leaveBtn').onclick = () => { location.href = 'index.html'; };
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' || e.key === 'p' || e.key === 'P'){
+      if (!$('pauseOv').classList.contains('hidden')) resume(); else pause();
+    }
+  });
+
+  function confetti(){
+    const colors = ['#ffd23f','#35e0ff','#ff5fa2','#4ef0a0','#8b5cf6'];
+    for (let i = 0; i < 80; i++){
+      const c = document.createElement('div'); c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[i % colors.length];
+      c.style.animationDuration = 2 + Math.random() * 2 + 's';
+      c.style.animationDelay = Math.random() * .6 + 's';
+      document.body.appendChild(c); setTimeout(() => c.remove(), 4800);
+    }
+  }
+  function endGame(won){
+    playing = false;
+    const stars = won ? (lives === 3 ? 3 : 2) : (lIdx >= 2 ? 1 : 0);
+    let isRecord = false;
+    if (player){
+      const all = store.get('mq_progress', {}), key = player.name.toLowerCase();
+      const mine = all[key] || {}, prev = mine[GAME_ID] || { best:0, stars:0 };
+      isRecord = score > prev.best;
+      mine[GAME_ID] = { best: Math.max(prev.best, score), stars: Math.max(prev.stars, stars) };
+      all[key] = mine; store.set('mq_progress', all);
+    }
+    $('endIcon').textContent = won ? '🏆' : '🥶';
+    $('endTitle').textContent = won ? 'Poção lendária criada! 🏆' : 'O caldeirão esfriou...';
+    $('endDesc').textContent = won
+      ? 'Você dominou frações em todos os níveis do laboratório. Mandou muito bem!'
+      : 'Suas vidas acabaram, mas cada tentativa te deixa mais forte. Bora tentar de novo?';
+    $('endStars').innerHTML = [0,1,2].map(i => `<span class="${i < stars ? '' : 'off'}" style="animation-delay:${.2 + i * .25}s">⭐</span>`).join('');
+    $('finalScore').textContent = score;
+    $('record').textContent = isRecord && score > 0 ? '🎉 Novo recorde!' : '';
+    const pct = tries ? Math.round(hits / tries * 100) : 0;
+    $('accuracy').textContent = `✅ ${hits} de ${tries} acertos (${pct}%)`;
+    $('endOv').classList.remove('hidden');
+    if (won){ sfx.win(); confetti(); } else sfx.lose();
+  }
+
+  $('startBtn').onclick = () => { sfx.click(); $('startOv').classList.add('hidden'); showRoundIntro(); };
+  $('goBtn').onclick = () => { sfx.click(); startLevel(); };
+  $('againBtn').onclick = () => { sfx.click(); resetGame(); };
+  $('mapBtn').onclick = $('backBtn0').onclick = $('backBtn1').onclick = () => { location.href = 'index.html'; };
+
+  if (player) $('hello').textContent = `${player.avatar} ${player.name}, aprenda frações misturando poções mágicas!`;
+  paintHUD(); paintRule();
+})();
+</script>
+</body>
+</html>

@@ -96,6 +96,7 @@
   .p1{background:radial-gradient(circle at 35% 30%,#7ff3ff,#1aa3d6 60%,#0b5f8f);--glow:rgba(53,224,255,.55)}
   .p2{background:radial-gradient(circle at 35% 30%,#ffb3d6,#ff5fa2 60%,#b3226a);--glow:rgba(255,95,162,.55)}
   .p3{background:radial-gradient(circle at 35% 30%,#ccc,#777 60%,#444);--glow:rgba(255,255,255,.08)}
+  .p4{background:radial-gradient(circle at 35% 30%,#d8b3ff,#8b5cf6 60%,#4c2a99);--glow:rgba(139,92,246,.55)}
   .planet-card h3{margin:4px 0 0;font-size:22px}
   .planet-card p{margin:0;color:var(--muted);font-size:15px;min-height:40px}
   .stars-row{font-size:26px;letter-spacing:2px}
@@ -177,10 +178,17 @@
       </a>
     </div>
 
-    <div class="unit"><h2>🚀 Expedição Galáctica</h2><span class="tag" style="background:var(--muted)">Em breve</span></div>
+    <div class="unit"><h2>🚀 Expedição Galáctica</h2><span class="tag">Unidade 2</span></div>
     <p style="color:var(--muted);margin:0 0 14px;font-size:15px">Sua nave se espatifou! Visite cada planeta, resolva os desafios e recupere as peças para voltar para casa.</p>
     <div class="planets">
-      <div class="planet-card locked"><div class="planet p3">🧙</div><h3>Planeta Místico</h3><p>Frações — o laboratório de poções de um mago alienígena.</p><span class="play">🔒 Bloqueado</span></div>
+      <a class="planet-card" href="pocoes-magicas.html" data-game="pocoes">
+        <div class="planet p4">🧙</div>
+        <h3>Planeta Místico</h3>
+        <p>Frações — o laboratório de poções de um mago alienígena.</p>
+        <div class="stars-row" data-stars></div>
+        <div class="best" data-best>Recorde: —</div>
+        <span class="play">Jogar ▶</span>
+      </a>
       <div class="planet-card locked"><div class="planet p3">🏴‍☠️</div><h3>Planeta Oceano</h3><p>Decimais — o mercado dos piratas espaciais.</p><span class="play">🔒 Bloqueado</span></div>
       <div class="planet-card locked"><div class="planet p3">🦖</div><h3>Planeta Jurássico</h3><p>Tabelas e gráficos — expedição para registrar fósseis.</p><span class="play">🔒 Bloqueado</span></div>
       <div class="planet-card locked"><div class="planet p3">🤖</div><h3>Planeta Máquina</h3><p>Fluxogramas — programe o robô explorador.</p><span class="play">🔒 Bloqueado</span></div>
@@ -266,12 +274,12 @@
 
   // ---------- Dados ----------
   const AVATARS = ['🧑‍🚀','👩‍🚀','👨‍🚀','👽','🤖','🦊','🐼','🐱','🐸','🦄','🐙','🐲'];
-  const GAMES = ['caca','venn'];
+  const GAMES = ['caca','venn','pocoes'];
   const RANKS = [
     {min:0, name:'Cadete Espacial'},
-    {min:2, name:'Explorador(a) Estelar'},
-    {min:4, name:'Piloto Galáctico'},
-    {min:6, name:'Comandante do Universo'}
+    {min:3, name:'Explorador(a) Estelar'},
+    {min:6, name:'Piloto Galáctico'},
+    {min:9, name:'Comandante do Universo'}
   ];
 
   const welcome = document.getElementById('welcome');
