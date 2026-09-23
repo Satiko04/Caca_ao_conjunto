@@ -166,20 +166,26 @@ Mesmo padrão dos outros jogos: **Início** ("Laboratório de Poções Mágicas"
 - Resposta livre de teclado: esteppers `+`/`−` para numerador e denominador (denominador travado quando o valor já é conhecido pelo enunciado, ex. níveis 1, 2 e a 2ª etapa do nível 3).
 - Aceita qualquer fração equivalente à correta (`fracEq`, por multiplicação cruzada); dá **+5 de bônus** e "Poção perfeita! 🌟" quando a resposta já está simplificada, senão mostra a forma simplificada como dica.
 - Sem repetir a mesma conta na mesma sessão de um nível (`uniqueGen`).
-- Botão **💡 Dica** por poção, sem custo.
 - Vidas, combo, HUD de gás/acertos e estrelas de resultado seguem o mesmo esquema dos outros dois jogos (3/2/1/0 estrelas conforme o nível alcançado).
+
+### Botão de dica (💡)
+- Cada poção tem **uma** dica, mostrada num balão de fala de uma corujinha 🦉 (`showOwlHint`), com uma pequena animação no frasco/caldeirão que acompanha o texto (`playHintAnimation`): partes piscando (adição), a parte usada escurecida (subtração), os frascos se subdividindo no novo denominador (nível 3), a interseção destacada no modelo de área (multiplicação) ou frasquinhos de exemplo aparecendo ao lado (divisão).
+- A dica usa os números da questão atual, mas nunca escreve o resultado final da conta.
+- Usar a dica não tira vida nem pontos, mas cancela o bônus de "Poção perfeita! 🌟" daquela questão — a resposta certa ainda conta, só sem o `+5` extra.
+- O botão fica desativado (`hintUsed`) até a próxima poção.
 
 ### Funções JavaScript principais
 
 | Função | O que faz |
 |---|---|
-| `genAdd` / `genSub` / `genMixed` / `genMul` / `genDiv` | Geram as poções de cada nível (um gerador por nível) |
+| `genAdd` / `genSub` / `genMixed` / `genMul` / `genDiv` | Geram as poções de cada nível (um gerador por nível), cada uma já com o texto da dica pronto |
 | `fracHTML(n, d)` | Monta o HTML da fração no formato empilhado |
 | `makeFlask(n, d, cor)` / `rebuildFlaskTicks` | Desenham o frasco/caldeirão e suas divisões |
 | `renderQuestion(Q)` | Decide qual visual e painel de resposta mostrar (steppers, escolha de denominador ou toque-para-encher) |
 | `renderAreaGrid` | Desenha o modelo de área (grade) da multiplicação |
 | `chooseDen(v)` | Valida a escolha do denominador comum (nível 3, etapa 1) |
 | `checkFractionAnswer()` / `checkTapfillAnswer()` | Validam a resposta montada nos steppers ou no toque-para-encher |
+| `showOwlHint()` / `hideOwlHint()` / `playHintAnimation(Q)` | Mostram o balão da coruja e a animação da dica no frasco/diagrama correspondente |
 | `renderExample(Q)` | Monta o exemplo visual da tela de introdução de cada nível |
 | `showRoundIntro()` / `startLevel()` / `resetGame()` | Controlam o fluxo entre telas e níveis |
 | `endGame(won)` | Calcula estrelas, salva recorde e mostra a tela final |

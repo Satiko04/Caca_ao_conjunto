@@ -116,6 +116,20 @@
   @keyframes floatUp{from{opacity:1}to{transform:translate(-50%,-50px);opacity:0}}
 
   .hint-row{display:flex;justify-content:flex-end;width:100%}
+  .icon-btn:disabled,.icon-btn[data-off]{opacity:.4;pointer-events:none}
+
+  .owl-hint{display:flex;align-items:flex-start;gap:10px;width:100%;cursor:pointer}
+  .owl-hint .owl{font-size:34px;flex:none;animation:owlBob 1.4s ease-in-out infinite}
+  @keyframes owlBob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-4px) rotate(4deg)}}
+  .owl-hint .speech{position:relative;background:rgba(255,255,255,.12);border:1px solid var(--line);border-radius:16px;padding:10px 14px;font-size:15px;line-height:1.4;flex:1}
+  .owl-hint .speech::before{content:'';position:absolute;left:-9px;top:14px;border:7px solid transparent;border-right-color:rgba(255,255,255,.25)}
+
+  .used-overlay{position:absolute;left:0;right:0;background:rgba(0,0,0,.55);z-index:2;animation:fadeIn .3s}
+  .hint-preview{opacity:0;animation:fadeIn .4s forwards}
+  @keyframes hintBlink{0%,100%{opacity:1}50%{opacity:.25}}
+  .hint-blink .flask-fill{animation:hintBlink .6s ease-in-out 3}
+  @keyframes hintGlow{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 3px rgba(255,210,63,.9) inset}}
+  .hint-glow{animation:hintGlow .8s ease-in-out 3}
 
   /* Telas sobrepostas */
   .overlay{position:fixed;inset:0;background:rgba(5,3,25,.78);display:grid;place-items:center;z-index:40;padding:16px;animation:fadeIn .2s}
@@ -174,6 +188,7 @@
 
   <div class="lab" id="lab">
     <div class="hint-row"><button class="icon-btn" id="hintBtn" title="Dica">💡 Dica</button></div>
+    <div class="owl-hint hidden" id="owlHint"><div class="owl">🦉</div><div class="speech" id="owlSpeech"></div></div>
     <p class="recipe-text" id="recipeText"></p>
 
     <div class="flask-row" id="givenFlasks"></div>
@@ -382,7 +397,7 @@
       text:`Coloque ${fracHTML(a, den)} de ${i1} e ${fracHTML(b, den)} de ${i2} no caldeirão.`,
       given:[{n:a, d:den, label:i1, color:'a'}, {n:b, d:den, label:i2, color:'b'}],
       ansN: a + b, ansD: den,
-      hint:`Some só os numeradores: ${a} + ${b} = ${a + b}. O denominador continua ${den}.`,
+      hint:`As partes têm o mesmo tamanho, então some só os de cima: ${a} + ${b}. O de baixo continua ${den}.`,
       explain:`${a}/${den} + ${b}/${den} = ${a+b}/${den}, porque ${a} partes + ${b} partes = ${a+b} partes de ${den}-avos.`,
       key:`add-${den}-${a}-${b}`
     };
@@ -398,7 +413,7 @@
       text:`O caldeirão tem ${fracHTML(start, den)} de poção. Você usou ${fracHTML(used, den)} para ${action}. Quanto sobrou?`,
       given:[{n:start, d:den, label:'no caldeirão', color:'a'}],
       ansN: start - used, ansD: den,
-      hint:`Tire as partes usadas: ${start} − ${used} = ${start-used}. O denominador continua ${den}.`,
+      hint:`O tamanho das partes não muda. Tire só as partes usadas: ${start} − ${used}. O de baixo continua ${den}.`,
       explain:`${start}/${den} − ${used}/${den} = ${start-used}/${den}, porque ${start} partes − ${used} partes = ${start-used} partes de ${den}-avos.`,
       key:`sub-${den}-${start}-${used}`
     };
@@ -432,7 +447,7 @@
       text:`Misture ${fracHTML(n1, d1)} de ${i1} ${op === '+' ? 'com' : 'menos'} ${fracHTML(n2, d2)} de ${i2}.`,
       given:[{n:n1, d:d1, label:i1, color:'a'}, {n:n2, d:d2, label:i2, color:'b'}],
       ansN, ansD,
-      hint:`Ache um múltiplo comum de ${d1} e ${d2}. Dica: ${d1} × ${d2 / gcdOf(d1,d2)} funciona.`,
+      hint:`Antes de misturar, deixe as partes do mesmo tamanho. Transforme as duas frações em ${L}avos: ${n1}/${d1} = ${eq1}/${L} e ${n2}/${d2} = ${eq2}/${L}.`,
       explain: op === '+'
         ? `${n1}/${d1} + ${n2}/${d2} = ${eq1}/${L} + ${eq2}/${L} = ${ansN}/${L}, porque primeiro deixamos as partes do mesmo tamanho (denominador ${L}).`
         : `${n1}/${d1} − ${n2}/${d2} = ${eq1}/${L} − ${eq2}/${L} = ${ansN}/${L}, porque primeiro deixamos as partes do mesmo tamanho (denominador ${L}).`,
@@ -451,7 +466,7 @@
         text:`A receita pede ${fracHTML(n, d)} de ${ing}, mas você vai fazer só metade. Quanto usar?`,
         area:{ n1:1, d1:2, n2:n, d2:d },
         ansN:n, ansD:d * 2,
-        hint:`"Metade de" é multiplicar por 1/2: numerador × numerador e denominador × denominador.`,
+        hint:`"Metade de" é multiplicar por 1/2. Multiplique em cima com em cima (1 × ${n}) e embaixo com embaixo (2 × ${d}).`,
         explain:`1/2 × ${n}/${d} = ${n}/${d*2}, porque multiplicamos numerador × numerador e denominador × denominador.`,
         key:`half-${n}-${d}`
       };
@@ -463,7 +478,7 @@
       text:`A receita pede ${times} colheres de ${fracHTML(1, den)} de ${ing}. Quanto é isso ao todo?`,
       given: Array.from({length: times}, () => ({n:1, d:den, label:'', color:'a'})),
       ansN: times, ansD: den,
-      hint:`Somar ${times} vezes 1/${den} é o mesmo que multiplicar: ${times} × 1/${den}.`,
+      hint:`Multiplicar por 1/${den} é juntar ${times} vezes. Multiplique em cima com em cima (${times} × 1) e embaixo com embaixo (1 × ${den}).`,
       explain:`${times} × 1/${den} = ${times}/${den}, porque juntamos ${times} partes de ${den}-avos.`,
       key:`times-${times}-${den}`
     };
@@ -484,7 +499,7 @@
         given:[{n:num, d:den, label:'poção total', color:'a'}],
         flaskDen, count, slots: Math.min(count + 3, 10),
         ansN: count, ansD: 1,
-        hint:`Veja quantas vezes 1/${flaskDen} cabe em ${num}/${den}.`,
+        hint:`Quantas vezes o frasco de 1/${flaskDen} cabe em ${num}/${den}? Pense em ${num}/${den} em ${flaskDen}avos: ${num}/${den} = ${num*(flaskDen/den)}/${flaskDen}.`,
         explain:`${num}/${den} ÷ 1/${flaskDen} = ${count}, porque ${num}/${den} equivale a ${count}/${flaskDen}, ou seja, ${count} frascos de 1/${flaskDen}.`,
         key:`fill-${num}-${den}-${flaskDen}`
       };
@@ -497,7 +512,7 @@
       text:`Divida ${fracHTML(num, den)} da poção igualmente entre ${splitBy} caldeirões. Quanto vai em cada um?`,
       given:[{n:num, d:den, label:'poção total', color:'a'}],
       splitBy, ansN:num, ansD: den * splitBy,
-      hint:`Dividir por ${splitBy} é multiplicar o denominador por ${splitBy}.`,
+      hint:`Dividir por ${splitBy} é multiplicar o denominador por ${splitBy}: ${den} × ${splitBy}.`,
       explain:`${num}/${den} ÷ ${splitBy} = ${num}/${den*splitBy}, porque cada caldeirão recebe uma parte ${splitBy} vezes menor.`,
       key:`split-${num}-${den}-${splitBy}`
     };
@@ -526,6 +541,7 @@
   let hits = 0, tries = 0;
   let current = null, genFn = null, denLocked = false, ansN = 0, ansD = 2;
   let filledFlasks = 0, playing = false, paused = false, busy = false;
+  let hintTimer = null, hintRevertFn = null, hintPreviewEls = [], mixedStage = 1;
 
   function paintGas(){
     const frac = Math.min((totalGas % GAS_STAR_COST) / GAS_STAR_COST, 1);
@@ -679,11 +695,61 @@
     }
   }
 
+  function clearHintAnimation(){
+    document.querySelectorAll('.used-overlay').forEach(el => el.remove());
+    hintPreviewEls.forEach(el => el.remove()); hintPreviewEls = [];
+    document.querySelectorAll('.hint-blink').forEach(el => el.classList.remove('hint-blink'));
+    document.querySelectorAll('.hint-glow').forEach(el => el.classList.remove('hint-glow'));
+    if (hintRevertFn){ const fn = hintRevertFn; hintRevertFn = null; fn(); }
+  }
+  function hideOwlHint(){
+    clearTimeout(hintTimer); hintTimer = null;
+    $('owlHint').classList.add('hidden');
+    clearHintAnimation();
+  }
+  function showOwlHint(text){
+    clearTimeout(hintTimer);
+    $('owlSpeech').textContent = text;
+    $('owlHint').classList.remove('hidden');
+    hintTimer = setTimeout(hideOwlHint, 7000);
+  }
+  $('owlHint').onclick = hideOwlHint;
+
+  function playHintAnimation(Q){
+    clearHintAnimation();
+    const givenFlasks = [...document.querySelectorAll('#givenFlasks .flask')];
+    if (Q.mode === 'choose-den' && mixedStage === 1){
+      renderGivenFlasks([{n:Q.eq1, d:Q.L, label:'', color:'a'}, {n:Q.eq2, d:Q.L, label:'', color:'b'}]);
+      hintRevertFn = () => renderGivenFlasks(Q.given);
+    } else if (Q.opSymbol === '−' && Q.mode === 'stepper-locked'){
+      const flask = givenFlasks[0], g = Q.given[0];
+      if (flask && g){
+        const overlay = document.createElement('div'); overlay.className = 'used-overlay';
+        const remainFrac = Q.ansN / g.d, usedFrac = (g.n - Q.ansN) / g.d;
+        overlay.style.bottom = (remainFrac * 100) + '%'; overlay.style.height = (usedFrac * 100) + '%';
+        flask.appendChild(overlay);
+      }
+    } else if (Q.area){
+      document.querySelectorAll('#givenArea .area-cell.both').forEach(c => c.classList.add('hint-glow'));
+    } else if (Q.mode === 'tapfill'){
+      const box = $('givenFlasks');
+      for (let i = 0; i < 3; i++){
+        const w = document.createElement('div'); w.className = 'given-flask small hint-preview';
+        w.appendChild(makeFlask(1, 1, 'flask-ans'));
+        box.appendChild(w); hintPreviewEls.push(w);
+      }
+    } else {
+      givenFlasks.forEach(f => f.classList.add('hint-blink'));
+    }
+  }
+
   function chooseDen(v){
     if (busy || !playing || paused) return;
+    hideOwlHint();
     const Q = current;
     if (v === Q.L){
       sfx.click();
+      mixedStage = 2;
       renderGivenFlasks([{n:Q.eq1, d:Q.L, label:'', color:'a'}, {n:Q.eq2, d:Q.L, label:'', color:'b'}]);
       $('denChoicePanel').classList.add('hidden');
       setupStepper('stepper-locked', Q.L);
@@ -699,6 +765,7 @@
 
   function checkFractionAnswer(){
     if (busy || !playing || paused) return;
+    hideOwlHint();
     busy = true; tries++;
     const Q = current;
     const ok = fracEq(ansN, ansD, Q.ansN, Q.ansD) && ansD > 0;
@@ -706,11 +773,13 @@
       hits++; combo++;
       const [sN, sD] = simplifyFrac(ansN, ansD);
       const isSimplified = sN === ansN && sD === ansD;
-      const pts = 10 + (combo >= 3 ? 5 : 0) + (isSimplified ? 5 : 0);
+      const bonusEligible = isSimplified && !Q.hintUsed;
+      const pts = 10 + (combo >= 3 ? 5 : 0) + (bonusEligible ? 5 : 0);
       score += pts; addGas(pts); sfx.ok();
       $('answerFlask').classList.add('success');
       floatSteam($('answerFlask'));
-      toast(isSimplified ? `Poção perfeita! 🌟 +${pts}` : `Certo! Dá para simplificar para ${sN}/${sD} (+${pts})`);
+      const msg = bonusEligible ? `Poção perfeita! 🌟 +${pts}` : isSimplified ? `Certo! +${pts}` : `Certo! Dá para simplificar para ${sN}/${sD} (+${pts})`;
+      toast(msg);
       markDot(true);
     } else {
       combo = 0; lives--; sfx.bad();
@@ -726,6 +795,7 @@
 
   function checkTapfillAnswer(){
     if (busy || !playing || paused) return;
+    hideOwlHint();
     busy = true; tries++;
     const Q = current;
     const ok = filledFlasks === Q.count;
@@ -748,7 +818,11 @@
 
   function nextQuestion(){
     current = genFn();
+    current.hintUsed = false;
+    mixedStage = 1;
     busy = false;
+    hideOwlHint();
+    $('hintBtn').disabled = false;
     renderQuestion(current);
   }
   function next(delay){
@@ -764,7 +838,14 @@
     }, delay);
   }
 
-  $('hintBtn').onclick = () => { if (current) toast('💡 ' + current.hint); };
+  $('hintBtn').onclick = () => {
+    if (!current || current.hintUsed || busy || !playing || paused) return;
+    sfx.click();
+    current.hintUsed = true;
+    $('hintBtn').disabled = true;
+    showOwlHint(current.hint);
+    playHintAnimation(current);
+  };
 
   function renderExample(Q){
     const box = $('rExample'); box.innerHTML = '';
