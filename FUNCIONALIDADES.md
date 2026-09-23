@@ -22,6 +22,8 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 | `mq_progress` | `{ [nomeEmMinúsculo]: { [gameId]: { best, stars } } }` — recorde e estrelas por jogador e por jogo |
 | `mq_gas` | `{ [nomeEmMinúsculo]: { gas, stars } }` — banco de gás acumulado (compartilhado entre os três jogos) e quantas estrelas já foram trocadas por esse jogador |
 | `mq_pocoes_niveis` | `{ [nomeEmMinúsculo]: { unlocked[5], stars[5], best[5] } }` — progresso por nível do Laboratório de Poções Mágicas |
+| `mq_caca_grimorio` | `{ [nomeEmMinúsculo]: { [itemId]: true } }` — itens colecionáveis desbloqueados no Caça ao Conjunto |
+| `mq_venn_grimorio` | `{ [nomeEmMinúsculo]: { [itemId]: true } }` — itens colecionáveis desbloqueados no Diagrama de Venn |
 
 ---
 
@@ -87,6 +89,7 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 - Pausa automática ao trocar de aba (`visibilitychange`) e manual (botão ⏸️ ou tecla `P`/`Esc`).
 - Ao final: 3 estrelas (venceu com todas as vidas), 2 (venceu com menos vidas), 1 (perdeu depois da 3ª rodada), 0 (perdeu antes). Recorde e estrelas são salvos por jogador. A tela de fim também mostra o **aproveitamento** (acertos de X tentativas, em %).
 - Confete e som de vitória ao concluir as 4 rodadas.
+- **Grimório 📖** (botão na tela inicial): coleção de 6 itens salva em `mq_caca_grimorio` — um por rodada concluída (`caca_r1`–`caca_r4`), um por vencer sem perder vida (`caca_perfeito`) e um por acertar 10 meteoros seguidos (`caca_combo`). Cada item mostra um fato curioso ao ser desbloqueado; um aviso "📖 ... desbloqueada!" aparece na tela seguinte (rodada ou fim de jogo).
 
 ### Funções JavaScript principais
 
@@ -128,6 +131,7 @@ Mesmo padrão do jogo 1: **Início**, **Rodada** (com botão **🗺️ Mapa** ad
 - Erro: o elemento treme, mostra uma explicação (`explain`) do porquê está errado, perde uma vida e zera o combo.
 - Botão **💡 Dica** — seleciona um elemento e mostra as perguntas-guia dos conjuntos.
 - Vidas, pausa, som e telas de fim seguem o mesmo esquema do jogo 1 (3/2/1/0 estrelas, recorde salvo por jogador), incluindo o contador **✅ acertos** no HUD, o aproveitamento (%) na tela final e o banco de **gás trocável por estrela**.
+- **Grimório 👾** (botão na tela inicial): coleção de 6 itens salva em `mq_venn_grimorio` — um por rodada concluída (`venn_r1`–`venn_r3`), um por vencer sem perder vida (`venn_perfeito`), um por vencer sem usar a dica (`venn_semdica`) e um por acertar 8 elementos seguidos (`venn_combo`).
 
 ### Funções JavaScript principais
 
@@ -216,6 +220,7 @@ Cada nível concluído pela primeira vez desbloqueia uma poção colecionável c
 - **Feedback imediato**: som, texto flutuante, toast explicativo e animação (flash no portal, tremida no elemento) a cada resposta certa ou errada.
 - **Tentar novamente**: botão "🔄 Reiniciar" na pausa e "Jogar de novo 🔄" na tela de fim, sempre reiniciando pontuação, vidas e acertos do zero (o banco de gás **não** é afetado — veja abaixo).
 - **Estrelas de resultado**: 0 a 3 por partida, sempre salvando o melhor resultado (recorde) por jogador em `mq_progress`.
+- **Grimório**: Caça ao Conjunto e Diagrama de Venn têm cada um sua própria coleção de itens (acessível pelo botão 📖 na tela inicial), desbloqueados ao completar rodadas e desafios específicos (vencer sem perder vida, sem usar dica, ou emendar uma sequência de acertos). Um aviso "📖 ... desbloqueada!" aparece na tela seguinte quando isso acontece.
 
 ### Gás e estrelas trocáveis
 

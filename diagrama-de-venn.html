@@ -102,6 +102,15 @@
   .acc{color:var(--muted);font-weight:600;margin-bottom:10px;font-size:15px}
   .confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:60;pointer-events:none;animation:fall linear forwards}
   @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+  .unlock-note{color:var(--yellow);font-weight:700;font-size:15px;margin:-8px 0 14px}
+
+  .box.wide{max-width:520px}
+  .book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;margin:0 0 16px}
+  .book-item{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:16px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .book-item.locked{opacity:.45}
+  .bk-emoji{font-size:32px}
+  .bk-name{font-size:13px;font-weight:700;text-align:center;line-height:1.2}
+  .bk-fact{font-size:12px;color:var(--muted);text-align:center;line-height:1.3}
 </style>
 </head>
 <body>
@@ -154,7 +163,21 @@
     </ul>
     <div class="actions">
       <button class="btn ghost" id="backBtn0">🗺️ Mapa</button>
+      <button class="btn ghost" id="bookBtn">📖 Grimório</button>
       <button class="btn" id="startBtn">Começar 🚀</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grimório -->
+<div class="overlay hidden" id="bookOv">
+  <div class="box wide">
+    <div class="big">📖</div>
+    <h2>👾 Alienígenas</h2>
+    <p>Complete rodadas e desafios para colecionar.</p>
+    <div class="book-grid" id="bookGrid"></div>
+    <div class="actions">
+      <button class="btn" id="bookCloseBtn">Fechar</button>
     </div>
   </div>
 </div>
@@ -164,6 +187,7 @@
     <div class="big" id="rIcon">🪐</div>
     <h2 id="rTitle">Rodada 1</h2>
     <p id="rDesc"></p>
+    <p class="unlock-note hidden" id="rUnlock"></p>
     <div class="sets-preview" id="rSets"></div>
     <div class="actions">
       <button class="btn ghost" id="backBtn1">🗺️ Mapa</button>
@@ -205,6 +229,7 @@
     <div class="record" id="record"></div>
     <div class="acc" id="accuracy"></div>
     <p id="endDesc"></p>
+    <p class="unlock-note hidden" id="endUnlock"></p>
     <div class="actions">
       <button class="btn ghost" id="mapBtn">🗺️ Mapa</button>
       <button class="btn" id="againBtn">Jogar de novo 🔄</button>
@@ -240,6 +265,52 @@
     const mine = readGasBank(); mine.gas += amount; writeGasBank(mine);
     totalGas = mine.gas;
   }
+
+  // ---------- Grimório (coleção, persistente por jogador) ----------
+  const GRIMOIRE_ORDER = ['venn_r1','venn_r2','venn_r3','venn_perfeito','venn_semdica','venn_combo'];
+  const GRIMOIRE_ITEMS = {
+    venn_r1: { emoji:'👽', name:'Zorp, o Par-Três', how:'Complete a rodada Pares e Múltiplos de 3', fact:'6 e 12 moram na interseção: são pares e múltiplos de 3.' },
+    venn_r2: { emoji:'🐸', name:'Blip, o Sapo Espacial', how:'Complete a 2ª rodada', fact:'A e S estão em CASA e em SAPO, por isso ficam na interseção.' },
+    venn_r3: { emoji:'🐙', name:'Trix, o Tri-Conjunto', how:'Complete o desafio dos 3 conjuntos', fact:'30 é múltiplo de 2, 3 e 5: fica bem no centro dos três círculos.' },
+    venn_perfeito: { emoji:'👑', name:'Rainha da Interseção', how:'Vença as 3 rodadas sem perder nenhuma vida', fact:'Interseção (∩) é o que está nos dois conjuntos ao mesmo tempo.' },
+    venn_semdica: { emoji:'🧠', name:'Cérebro Galáctico', how:'Vença o jogo sem usar a dica', fact:'União (∪) junta tudo o que está em pelo menos um dos conjuntos.' },
+    venn_combo: { emoji:'⚡', name:'Faísca Estelar', how:'Acerte 8 elementos seguidos', fact:'O retângulo U é o conjunto universo: tudo o que pode entrar no jogo.' }
+  };
+  let pendingUnlocks = [];
+  function readGrimoire(){ return gasKey ? (store.get('mq_venn_grimorio', {})[gasKey] || {}) : {}; }
+  function unlockItem(id){
+    if (!gasKey) return false;
+    const all = store.get('mq_venn_grimorio', {});
+    const mine = all[gasKey] || {};
+    if (mine[id]) return false;
+    mine[id] = true; all[gasKey] = mine; store.set('mq_venn_grimorio', all);
+    pendingUnlocks.push(id);
+    return true;
+  }
+  function flushUnlockNotice(elId){
+    const el2 = $(elId);
+    if (pendingUnlocks.length){
+      el2.textContent = pendingUnlocks.map(id => `📖 ${GRIMOIRE_ITEMS[id].emoji} ${GRIMOIRE_ITEMS[id].name} desbloqueado!`).join(' ');
+      el2.classList.remove('hidden');
+    } else {
+      el2.textContent = ''; el2.classList.add('hidden');
+    }
+    pendingUnlocks = [];
+  }
+  function paintBook(){
+    const mine = readGrimoire();
+    const grid = $('bookGrid'); grid.innerHTML = '';
+    GRIMOIRE_ORDER.forEach(id => {
+      const it = GRIMOIRE_ITEMS[id], got = !!mine[id];
+      const card = document.createElement('div'); card.className = 'book-item' + (got ? '' : ' locked');
+      card.innerHTML = got
+        ? `<div class="bk-emoji">${it.emoji}</div><div class="bk-name">${it.name}</div><div class="bk-fact">${it.fact}</div>`
+        : `<div class="bk-emoji">❓</div><div class="bk-name">Bloqueada</div><div class="bk-fact">${it.how}</div>`;
+      grid.appendChild(card);
+    });
+  }
+  $('bookBtn').onclick = () => { sfx.click(); paintBook(); $('bookOv').classList.remove('hidden'); };
+  $('bookCloseBtn').onclick = () => { sfx.click(); $('bookOv').classList.add('hidden'); };
 
   // ---------- Sons ----------
   let soundOn = store.get('mq_sound', true), actx = null;
@@ -327,7 +398,7 @@
 
   // ---------- Estado ----------
   let rIdx = 0, lives = 3, score = 0, combo = 0, placed = 0, items = [], selected = null, paused = false, playing = false;
-  let hits = 0, tries = 0;
+  let hits = 0, tries = 0, hintUsedEver = false;
   const svg = $('venn'), tray = $('tray'), board = $('board');
 
   function paintGas(){
@@ -462,6 +533,7 @@
 
   function correct(chip, it, p){
     hits++; tries++; combo++;
+    if (combo >= 8) unlockItem('venn_combo');
     const pts = 10 + (combo >= 3 ? 5 : 0);
     score += pts; addGas(pts); placed++; sfx.ok();
     chip.remove();
@@ -476,6 +548,7 @@
     paintHUD(); paintCombo();
     if (placed >= items.length){
       playing = false;
+      unlockItem('venn_r' + (rIdx + 1));
       setTimeout(() => {
         rIdx++;
         if (rIdx >= ROUNDS.length) endGame(true);
@@ -495,6 +568,7 @@
   $('hintBtn').onclick = () => {
     if (!playing || paused) return;
     sfx.click();
+    hintUsedEver = true;
     const chip = selected || tray.querySelector('.chip');
     if (!chip) return;
     const it = items[+chip.dataset.idx], R = ROUNDS[rIdx];
@@ -511,6 +585,7 @@
     $('rTitle').textContent = `Rodada ${rIdx + 1}: ${R.title}`;
     $('rDesc').textContent = R.desc;
     $('rSets').innerHTML = R.sets.map((s, i) => `<span style="background:${COLORS[i]}">${s.name}</span>`).join('');
+    flushUnlockNotice('rUnlock');
     $('roundOv').classList.remove('hidden');
   }
   function startRound(){
@@ -523,7 +598,7 @@
     playing = true; paused = false;
   }
   function resetGame(){
-    rIdx = 0; lives = 3; score = 0; combo = 0; hits = 0; tries = 0; items = []; placed = 0; playing = false; paused = false;
+    rIdx = 0; lives = 3; score = 0; combo = 0; hits = 0; tries = 0; hintUsedEver = false; items = []; placed = 0; playing = false; paused = false;
     ['endOv','pauseOv','exitOv'].forEach(id => $(id).classList.add('hidden'));
     paintHUD(); paintCombo(); showRoundIntro();
   }
@@ -556,6 +631,8 @@
   function endGame(won){
     playing = false;
     const stars = won ? (lives === 3 ? 3 : 2) : (rIdx >= 1 ? 1 : 0);
+    if (won && lives === 3) unlockItem('venn_perfeito');
+    if (won && !hintUsedEver) unlockItem('venn_semdica');
     let isRecord = false;
     if (player){
       const all = store.get('mq_progress', {}), key = player.name.toLowerCase();
@@ -577,6 +654,7 @@
     $('record').textContent = isRecord && score > 0 ? '🎉 Novo recorde!' : '';
     const pct = tries ? Math.round(hits / tries * 100) : 0;
     $('accuracy').textContent = `✅ ${hits} de ${tries} acertos (${pct}%)`;
+    flushUnlockNotice('endUnlock');
     $('endOv').classList.remove('hidden');
     if (won){ sfx.win(); confetti(); } else sfx.lose();
   }

@@ -42,6 +42,7 @@ Every page uses a `store` wrapper (`try/catch`-guarded `localStorage.getItem/set
 | `mq_progress` | `{ [nameLower]: { [gameId]: { best, stars } } }` | each game's `endGame()`, on legitimate match completion only (win or lives=0) |
 | `mq_gas` | `{ [nameLower]: { gas, stars } }` | all three games (`addGas()`, on every correct answer — survives leaving mid-match); spent only via the trade UI in `index.html` |
 | `mq_pocoes_niveis` | `{ [nameLower]: { unlocked[5], stars[5], best[5] } }` | `pocoes-magicas.html` only, on `finishLevel(true)`; its per-level `stars` average feeds `mq_progress['pocoes'].stars` |
+| `mq_caca_grimorio` / `mq_venn_grimorio` | `{ [nameLower]: { [itemId]: true } }` | that game's `unlockItem(id)`, on specific milestones (round completion, perfect win, no-hint win, combo streak) — independent of `mq_progress`, purely a collectible log |
 
 `gameId` is `'caca'`, `'venn'`, or `'pocoes'` (the `GAME_ID` constant at the top of each game's script).
 

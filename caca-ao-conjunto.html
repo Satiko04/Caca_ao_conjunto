@@ -123,6 +123,15 @@
   .acc{color:var(--muted);font-weight:600;margin-bottom:10px;font-size:15px}
   .confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:60;pointer-events:none;animation:fall linear forwards}
   @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+  .unlock-note{color:var(--yellow);font-weight:700;font-size:15px;margin:-8px 0 14px}
+
+  .box.wide{max-width:520px}
+  .book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;margin:0 0 16px}
+  .book-item{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:16px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .book-item.locked{opacity:.45}
+  .bk-emoji{font-size:32px}
+  .bk-name{font-size:13px;font-weight:700;text-align:center;line-height:1.2}
+  .bk-fact{font-size:12px;color:var(--muted);text-align:center;line-height:1.3}
 
   @media (max-height:640px){ .portal{padding:10px 6px} .portal b{font-size:18px} .meteor{width:80px;height:80px;margin-left:-40px} .meteor .rock{font-size:32px} }
 </style>
@@ -175,7 +184,21 @@
     </ul>
     <div class="actions">
       <button class="btn ghost" id="backBtn0">🗺️ Mapa</button>
+      <button class="btn ghost" id="bookBtn">📖 Grimório</button>
       <button class="btn" id="startBtn">Começar 🚀</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grimório -->
+<div class="overlay hidden" id="bookOv">
+  <div class="box wide">
+    <div class="big">📖</div>
+    <h2>☄️ Meteoritos</h2>
+    <p>Complete rodadas e desafios para colecionar.</p>
+    <div class="book-grid" id="bookGrid"></div>
+    <div class="actions">
+      <button class="btn" id="bookCloseBtn">Fechar</button>
     </div>
   </div>
 </div>
@@ -186,6 +209,7 @@
     <div class="big" id="rIcon">🪐</div>
     <h2 id="rTitle">Rodada 1</h2>
     <p id="rDesc"></p>
+    <p class="unlock-note hidden" id="rUnlock"></p>
     <div class="sets-preview" id="rSets"></div>
     <div class="actions">
       <button class="btn ghost" id="backBtn1">🗺️ Mapa</button>
@@ -230,6 +254,7 @@
     <div class="record" id="record"></div>
     <div class="acc" id="accuracy"></div>
     <p id="endDesc"></p>
+    <p class="unlock-note hidden" id="endUnlock"></p>
     <div class="actions">
       <button class="btn ghost" id="mapBtn">🗺️ Mapa</button>
       <button class="btn" id="againBtn">Jogar de novo 🔄</button>
@@ -264,6 +289,52 @@
     const mine = readGasBank(); mine.gas += amount; writeGasBank(mine);
     totalGas = mine.gas;
   }
+
+  // ---------- Grimório (coleção, persistente por jogador) ----------
+  const GRIMOIRE_ORDER = ['caca_r1','caca_r2','caca_r3','caca_r4','caca_perfeito','caca_combo'];
+  const GRIMOIRE_ITEMS = {
+    caca_r1: { emoji:'🍿', name:'Meteorito Pipoca', how:'Complete a rodada Pares e Ímpares', fact:'O zero é par, porque 2 × 0 = 0.' },
+    caca_r2: { emoji:'🔤', name:'Cometa Soletrado', how:'Complete a rodada Vogais e Consoantes', fact:'O alfabeto tem 26 letras: 5 vogais e 21 consoantes.' },
+    caca_r3: { emoji:'🧮', name:'Asteroide Tabuada', how:'Complete a rodada Múltiplos de 3 e de 4', fact:'12 é múltiplo de 3 e de 4 ao mesmo tempo. Por isso ele não aparece nessa rodada!' },
+    caca_r4: { emoji:'🔷', name:'Pedra Poligonal', how:'Complete a rodada dos polígonos', fact:'Todo quadrado também é um retângulo e um losango.' },
+    caca_perfeito: { emoji:'🛡️', name:'Meteoro Invencível', how:'Vença as 4 rodadas sem perder nenhuma vida', fact:'Um número é par ou ímpar, nunca os dois. Esses conjuntos não têm interseção!' },
+    caca_combo: { emoji:'🔥', name:'Cometa Combo', how:'Acerte 10 meteoros seguidos', fact:'Todo múltiplo de 4 também é par, porque 4 = 2 × 2.' }
+  };
+  let pendingUnlocks = [];
+  function readGrimoire(){ return gasKey ? (store.get('mq_caca_grimorio', {})[gasKey] || {}) : {}; }
+  function unlockItem(id){
+    if (!gasKey) return false;
+    const all = store.get('mq_caca_grimorio', {});
+    const mine = all[gasKey] || {};
+    if (mine[id]) return false;
+    mine[id] = true; all[gasKey] = mine; store.set('mq_caca_grimorio', all);
+    pendingUnlocks.push(id);
+    return true;
+  }
+  function flushUnlockNotice(elId){
+    const el = $(elId);
+    if (pendingUnlocks.length){
+      el.textContent = pendingUnlocks.map(id => `📖 ${GRIMOIRE_ITEMS[id].emoji} ${GRIMOIRE_ITEMS[id].name} desbloqueada!`).join(' ');
+      el.classList.remove('hidden');
+    } else {
+      el.textContent = ''; el.classList.add('hidden');
+    }
+    pendingUnlocks = [];
+  }
+  function paintBook(){
+    const mine = readGrimoire();
+    const grid = $('bookGrid'); grid.innerHTML = '';
+    GRIMOIRE_ORDER.forEach(id => {
+      const it = GRIMOIRE_ITEMS[id], got = !!mine[id];
+      const card = document.createElement('div'); card.className = 'book-item' + (got ? '' : ' locked');
+      card.innerHTML = got
+        ? `<div class="bk-emoji">${it.emoji}</div><div class="bk-name">${it.name}</div><div class="bk-fact">${it.fact}</div>`
+        : `<div class="bk-emoji">❓</div><div class="bk-name">Bloqueada</div><div class="bk-fact">${it.how}</div>`;
+      grid.appendChild(card);
+    });
+  }
+  $('bookBtn').onclick = () => { sfx.click(); paintBook(); $('bookOv').classList.remove('hidden'); };
+  $('bookCloseBtn').onclick = () => { sfx.click(); $('bookOv').classList.add('hidden'); };
 
   // ---------- Sons ----------
   let soundOn = store.get('mq_sound', true), actx = null;
@@ -376,6 +447,7 @@
     $('rTitle').textContent = `Rodada ${rIdx + 1}: ${R.title}`;
     $('rDesc').textContent = R.desc;
     $('rSets').innerHTML = `<span style="background:#1a7fb8">${R.sets[0].name}</span><span style="background:#d63a82">${R.sets[1].name}</span>`;
+    flushUnlockNotice('rUnlock');
     $('roundOv').classList.remove('hidden');
   }
 
@@ -432,6 +504,7 @@
     tries++;
     if (side === current.ans){
       hits++; combo++;
+      if (combo >= 10) unlockItem('caca_combo');
       const bonus = Math.round(5 * (1 - elapsed / current.dur));
       const pts = 10 + bonus + (combo >= 3 ? 5 : 0);
       score += pts; addGas(pts); sfx.ok();
@@ -475,6 +548,7 @@
       current = null; done++;
       if (lives <= 0) return endGame(false);
       if (done >= ROUNDS[rIdx].count){
+        unlockItem('caca_r' + (rIdx + 1));
         rIdx++;
         if (rIdx >= ROUNDS.length) return endGame(true);
         stop(); sfx.win(); showRoundIntro(); return;
@@ -528,6 +602,7 @@
   function endGame(won){
     stop();
     const stars = won ? (lives === 3 ? 3 : 2) : (rIdx >= 2 ? 1 : 0);
+    if (won && lives === 3) unlockItem('caca_perfeito');
     let isRecord = false;
     if (player){
       const all = store.get('mq_progress', {}), key = player.name.toLowerCase();
@@ -549,6 +624,7 @@
     $('record').textContent = isRecord && score > 0 ? '🎉 Novo recorde!' : '';
     const pct = tries ? Math.round(hits / tries * 100) : 0;
     $('accuracy').textContent = `✅ ${hits} de ${tries} acertos (${pct}%)`;
+    flushUnlockNotice('endUnlock');
     $('endOv').classList.remove('hidden');
     if (won){ sfx.win(); confetti(); } else sfx.lose();
   }
