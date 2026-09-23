@@ -172,7 +172,7 @@ Mesmo padrão dos outros jogos: **Início** ("Laboratório de Poções Mágicas"
 - Cada poção tem **uma** dica, mostrada num balão de fala de uma corujinha 🦉 (`showOwlHint`), com uma pequena animação no frasco/caldeirão que acompanha o texto (`playHintAnimation`): partes piscando (adição), a parte usada escurecida (subtração), os frascos se subdividindo no novo denominador (nível 3), a interseção destacada no modelo de área (multiplicação) ou frasquinhos de exemplo aparecendo ao lado (divisão).
 - A dica usa os números da questão atual, mas nunca escreve o resultado final da conta.
 - Usar a dica não tira vida nem pontos, mas cancela o bônus de "Poção perfeita! 🌟" daquela questão — a resposta certa ainda conta, só sem o `+5` extra.
-- O botão fica desativado (`hintUsed`) até a próxima poção.
+- O botão continua sempre ativo (pode ser clicado de novo na mesma poção, mas o bônus de simplificada já fica cancelado desde o primeiro uso).
 
 ### Funções JavaScript principais
 

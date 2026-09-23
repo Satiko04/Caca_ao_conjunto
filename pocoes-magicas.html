@@ -116,7 +116,6 @@
   @keyframes floatUp{from{opacity:1}to{transform:translate(-50%,-50px);opacity:0}}
 
   .hint-row{display:flex;justify-content:flex-end;width:100%}
-  .icon-btn:disabled,.icon-btn[data-off]{opacity:.4;pointer-events:none}
 
   .owl-hint{display:flex;align-items:flex-start;gap:10px;width:100%;cursor:pointer}
   .owl-hint .owl{font-size:34px;flex:none;animation:owlBob 1.4s ease-in-out infinite}
@@ -822,7 +821,6 @@
     mixedStage = 1;
     busy = false;
     hideOwlHint();
-    $('hintBtn').disabled = false;
     renderQuestion(current);
   }
   function next(delay){
@@ -839,10 +837,9 @@
   }
 
   $('hintBtn').onclick = () => {
-    if (!current || current.hintUsed || busy || !playing || paused) return;
+    if (!current || busy || !playing || paused) return;
     sfx.click();
     current.hintUsed = true;
-    $('hintBtn').disabled = true;
     showOwlHint(current.hint);
     playHintAnimation(current);
   };
