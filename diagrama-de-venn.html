@@ -57,7 +57,7 @@
   .chip.sel{border-color:var(--yellow);box-shadow:0 0 0 4px rgba(255,210,63,.35),0 5px 0 #24165a;transform:translateY(-3px)}
   .chip.wrong{animation:shake .4s;border-color:var(--red)}
   @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-  .ghost{position:fixed;z-index:30;pointer-events:none;transform:translate(-50%,-50%) scale(1.1);opacity:.92}
+  .drag-ghost{position:fixed;z-index:30;pointer-events:none;transform:translate(-50%,-50%) scale(1.1);opacity:.92}
 
   .overlay{position:fixed;inset:0;background:rgba(5,3,25,.78);display:grid;place-items:center;z-index:40;padding:16px;animation:fade .2s}
   @keyframes fade{from{opacity:0}}
@@ -489,7 +489,7 @@
       if (!chip.hasPointerCapture(e.pointerId)) return;
       if (!dragging && Math.hypot(e.clientX - sx, e.clientY - sy) > 6){
         dragging = true; sfx.pick();
-        ghost = chip.cloneNode(true); ghost.classList.add('ghost'); ghost.classList.remove('sel');
+        ghost = chip.cloneNode(true); ghost.classList.add('drag-ghost'); ghost.classList.remove('sel');
         document.body.appendChild(ghost); chip.style.opacity = .3;
       }
       if (ghost){ ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px'; }
