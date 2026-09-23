@@ -21,6 +21,7 @@ Não há backend: tudo roda no navegador e o progresso é salvo em `localStorage
 | `mq_sound` | `true`/`false` — som ligado/desligado |
 | `mq_progress` | `{ [nomeEmMinúsculo]: { [gameId]: { best, stars } } }` — recorde e estrelas por jogador e por jogo |
 | `mq_gas` | `{ [nomeEmMinúsculo]: { gas, stars } }` — banco de gás acumulado (compartilhado entre os três jogos) e quantas estrelas já foram trocadas por esse jogador |
+| `mq_pocoes_niveis` | `{ [nomeEmMinúsculo]: { unlocked[5], stars[5], best[5] } }` — progresso por nível do Laboratório de Poções Mágicas |
 
 ---
 
@@ -149,24 +150,34 @@ Mesmo padrão do jogo 1: **Início**, **Rodada** (com botão **🗺️ Mapa** ad
 
 ## pocoes-magicas.html — Laboratório de Poções Mágicas (jogo 3)
 
-**Mecânica:** exercícios de frações onde toda fração aparece desenhada num frasco/caldeirão dividido em partes iguais (nunca só como número em linha), e a resposta é montada com botões **+**/**−** para numerador e denominador, sem teclado.
+**Mecânica:** exercícios de frações organizados como um **mapa de 5 níveis independentes** (um por operação), onde toda fração aparece desenhada num frasco/caldeirão dividido em partes iguais (nunca só como número em linha).
 
 ### Telas (overlays)
-Mesmo padrão dos outros jogos: **Início** ("Laboratório de Poções Mágicas"), **Nível** (introdução com ícone, explicação e um exemplo visual, com **🗺️ Mapa**), **Pausa**, **Sair** e **Fim** ("Poção lendária criada! 🏆" ou "O caldeirão esfriou...").
+**Início** ("Laboratório de Poções Mágicas") → **Mapa de níveis** (5 frascos, um por nível) → **Grimório** (coleção, acessível do mapa) → **Nível** (introdução com ícone, explicação e exemplo visual, botão "Já sei, bora! ▶" para pular) → **Jogo** → **Pausa/Sair** → **Fim de nível** ("Poção pronta! 🏆" ou "O caldeirão esfriou...").
 
-### Níveis (6 poções cada)
-1. 🧪 Misturando ingredientes — adição com mesmo denominador (2 a 10).
-2. 🥄 Usando parte da poção — subtração com mesmo denominador.
-3. 🔮 Receitas de mestres — adição/subtração com denominadores diferentes; o aluno primeiro escolhe o denominador comum entre 3 opções, depois monta o resultado.
-4. 📜 Metade da receita — multiplicação ("metade de" ou "N × 1/den"), com modelo de área (grade colunas × linhas) para o caso fração × fração.
-5. 🍶 Enchendo frascos menores — divisão: tocar em frascos vazios para "enchê-los" e informar a quantidade (fração ÷ fração unitária), ou dividir uma fração entre N caldeirões (fração ÷ inteiro).
+### Mapa e progressão (`mq_pocoes_niveis`)
+- 5 frascos no mapa, um por nível. O **nível 1 começa liberado**; completar um nível libera o próximo, salvo em `mq_pocoes_niveis` (`{ [jogador]: { unlocked[], stars[], best[] } }`). Qualquer nível liberado pode ser rejogado a qualquer momento.
+- Cada nível é uma sessão independente: **5 poções, 3 vidas próprias**. Perder todas as vidas reinicia só aquele nível (`finishLevel(false)`), sem afetar o progresso dos outros.
+- **Estrelas do nível**: 3 = concluiu sem perder vida, 2 = perdeu 1 ou 2 vidas, 1 = concluiu mas usou a dica (prevalece sobre as outras regras). O jogo grava sempre o melhor resultado (`Math.max`).
+- **Estrelas finais** (as que aparecem no card do jogo no mapa principal, `index.html`) são a **média das estrelas dos 5 níveis**, sincronizada em `mq_progress` toda vez que um nível é concluído (`syncOverallProgress`).
+
+### Grimório 📖
+Cada nível concluído pela primeira vez desbloqueia uma poção colecionável com nome e emoji próprios (ex.: "Poção do Arroto Arco-Íris 🌈"), guardada em `GRIMOIRE` e exibida numa tela de coleção acessível pelo botão 📖 do mapa — poções de níveis ainda não concluídos aparecem como "❓ Bloqueada".
+
+### Níveis (5 poções cada)
+1. 🧪 Misturando ingredientes — adição com mesmo denominador. Resposta por **múltipla escolha** (3 frascos), com erros comuns como opção (ex.: somar os denominadores).
+2. 🥄 Usando parte da poção — subtração com mesmo denominador. Também múltipla escolha (ex.: somar em vez de subtrair).
+3. 🔮 Receitas de mestres — denominadores diferentes: o aluno primeiro escolhe o denominador comum entre 3 opções, depois monta o resultado num **teclado numérico (1 a 12)**.
+4. 📜 Metade da receita — multiplicação ("metade de" ou "N × 1/den"), com modelo de área para fração × fração. Múltipla escolha (ex.: multiplicar só o numerador).
+5. 🍶 Enchendo frascos menores — divisão (fração ÷ fração unitária ou fração ÷ inteiro), respondida também pelo **teclado numérico (1 a 12)**.
 
 ### Mecânicas de jogo
-- Toda fração é renderizada como um frasco (`makeFlask`) com o número de traços igual ao denominador e o líquido preenchendo a fração do numerador, além do formato empilhado (`fracHTML`, numerador/traço/denominador).
-- Resposta livre de teclado: esteppers `+`/`−` para numerador e denominador (denominador travado quando o valor já é conhecido pelo enunciado, ex. níveis 1, 2 e a 2ª etapa do nível 3).
-- Aceita qualquer fração equivalente à correta (`fracEq`, por multiplicação cruzada); dá **+5 de bônus** e "Poção perfeita! 🌟" quando a resposta já está simplificada, senão mostra a forma simplificada como dica.
+- Toda fração é renderizada como um frasco (`makeFlask`) com o número de traços igual ao denominador e o líquido preenchendo a fração do numerador, além do formato empilhado (`fracHTML`).
+- **Níveis 1, 2 e 4**: múltipla escolha entre 3 frascos (`setupMC`/`checkMCAnswer`) — as duas alternativas erradas (`mcWrong`) representam confusões comuns do conteúdo daquele nível.
+- **Níveis 3 e 5**: a fração é montada tocando em botões numéricos de 1 a 12 (`setupKeypad`/`buildKeypad`), sem `+`/`−`; aceita qualquer fração equivalente à correta e dá **+5 de bônus** com "Poção perfeita! 🌟" quando a resposta já está simplificada.
+- Todo texto de pergunta (`recipeText`) cabe numa linha; a explicação completa só aparece depois de errar (`explain`, no toast "Ops! ...").
 - Sem repetir a mesma conta na mesma sessão de um nível (`uniqueGen`).
-- Vidas, combo, HUD de gás/acertos e estrelas de resultado seguem o mesmo esquema dos outros dois jogos (3/2/1/0 estrelas conforme o nível alcançado).
+- Vidas, combo, HUD de gás/acertos e recorde de pontuação por nível seguem o mesmo esquema dos outros dois jogos.
 
 ### Botão de dica (💡)
 - Cada poção tem **uma** dica, mostrada num balão de fala de uma corujinha 🦉 (`showOwlHint`), com uma pequena animação no frasco/caldeirão que acompanha o texto (`playHintAnimation`): partes piscando (adição), a parte usada escurecida (subtração), os frascos se subdividindo no novo denominador (nível 3), a interseção destacada no modelo de área (multiplicação) ou frasquinhos de exemplo aparecendo ao lado (divisão).
@@ -178,17 +189,19 @@ Mesmo padrão dos outros jogos: **Início** ("Laboratório de Poções Mágicas"
 
 | Função | O que faz |
 |---|---|
-| `genAdd` / `genSub` / `genMixed` / `genMul` / `genDiv` | Geram as poções de cada nível (um gerador por nível), cada uma já com o texto da dica pronto |
+| `genAdd` / `genSub` / `genMixed` / `genMul` / `genDiv` | Geram as poções de cada nível (um gerador por nível), com distratores de múltipla escolha ou faixa 1–12 já embutidos conforme o nível |
 | `fracHTML(n, d)` | Monta o HTML da fração no formato empilhado |
 | `makeFlask(n, d, cor)` / `rebuildFlaskTicks` | Desenham o frasco/caldeirão e suas divisões |
-| `renderQuestion(Q)` | Decide qual visual e painel de resposta mostrar (steppers, escolha de denominador ou toque-para-encher) |
+| `renderQuestion(Q)` | Decide qual visual e painel de resposta mostrar (múltipla escolha, escolha de denominador ou teclado numérico) |
 | `renderAreaGrid` | Desenha o modelo de área (grade) da multiplicação |
+| `buildMCOptions()` / `setupMC()` / `checkMCAnswer()` | Montam e conferem a resposta de múltipla escolha (níveis 1, 2 e 4) |
+| `buildKeypad()` / `setupKeypad()` / `checkFractionAnswer()` | Montam e conferem a resposta pelo teclado numérico (nível 3 etapa 2 e nível 5) |
 | `chooseDen(v)` | Valida a escolha do denominador comum (nível 3, etapa 1) |
-| `checkFractionAnswer()` / `checkTapfillAnswer()` | Validam a resposta montada nos steppers ou no toque-para-encher |
 | `showOwlHint()` / `hideOwlHint()` / `playHintAnimation(Q)` | Mostram o balão da coruja e a animação da dica no frasco/diagrama correspondente |
 | `renderExample(Q)` | Monta o exemplo visual da tela de introdução de cada nível |
-| `showRoundIntro()` / `startLevel()` / `resetGame()` | Controlam o fluxo entre telas e níveis |
-| `endGame(won)` | Calcula estrelas, salva recorde e mostra a tela final |
+| `readLevelProgress()` / `writeLevelProgress()` / `syncOverallProgress()` | Leem/gravam o progresso por nível e sincronizam a média de estrelas com `mq_progress` |
+| `paintLevelMap()` / `showLevelMap()` / `paintBook()` | Desenham o mapa de níveis e o Grimório |
+| `showRoundIntro()` / `startLevel()` / `finishLevel(won)` | Controlam o fluxo entre telas, inicia uma sessão de nível e calcula/salva o resultado ao terminar |
 
 ---
 

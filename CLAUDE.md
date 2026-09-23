@@ -29,7 +29,7 @@ There is no build, lint, or test tooling in this repo. To work on it:
 - `index.html` — login/avatar screen + the map of planets (mission select), player rank and XP.
 - `caca-ao-conjunto.html` — Game 1: falling-meteor classification (sort items into two sets before they land).
 - `diagrama-de-venn.html` — Game 2: drag-and-drop Venn diagram placement (2 or 3 sets).
-- `pocoes-magicas.html` — Game 3: fraction operations (add/sub/mul/div) across 5 levels, answered by building a fraction with +/- steppers; every fraction is always shown as a divided flask, never as inline "n/d" text.
+- `pocoes-magicas.html` — Game 3: fraction operations across 5 *independent* levels selected from an in-game level map (level 1 starts unlocked, finishing one unlocks the next, per-level 3-lives/5-question sessions, progress in `mq_pocoes_niveis`). Levels 1/2/4 answer via 3-option multiple choice (wrong options model common mistakes); levels 3/5 answer by tapping a 1–12 numeric keypad for numerator/denominator. Every fraction is always shown as a divided flask, never as inline "n/d" text. Completing a level for the first time unlocks a named collectible potion in the in-game Grimório (`GRIMOIRE` array).
 
 Each file is fully self-contained: its own `<style>` and `<script>` inline in the `<head>`/before `</body>`. There is no shared CSS/JS file and no bundler — if a fix or style applies to more than one page, it has to be duplicated by hand into each file.
 
@@ -41,14 +41,15 @@ Every page uses a `store` wrapper (`try/catch`-guarded `localStorage.getItem/set
 | `mq_sound` | `boolean` | any page (sound toggle) |
 | `mq_progress` | `{ [nameLower]: { [gameId]: { best, stars } } }` | each game's `endGame()`, on legitimate match completion only (win or lives=0) |
 | `mq_gas` | `{ [nameLower]: { gas, stars } }` | all three games (`addGas()`, on every correct answer — survives leaving mid-match); spent only via the trade UI in `index.html` |
+| `mq_pocoes_niveis` | `{ [nameLower]: { unlocked[5], stars[5], best[5] } }` | `pocoes-magicas.html` only, on `finishLevel(true)`; its per-level `stars` average feeds `mq_progress['pocoes'].stars` |
 
 `gameId` is `'caca'`, `'venn'`, or `'pocoes'` (the `GAME_ID` constant at the top of each game's script).
 
 ### Per-game internal structure (same pattern in all three game files)
 
-Each game script is one IIFE with, in order: a `$(id)` shortcut, the `store` wrapper, a `beep()`-based Web Audio sound layer (no audio files — all SFX are synthesized oscillator tones, gathered in an `sfx` object), a content array that fully defines that game's questions (`ROUNDS` in the first two games, `LEVELS` + per-level `gen*()` generator functions in the fractions game — this is where to add or tweak questions), then game state (`score`, `lives`, `combo`, etc.), the render/`paintX()` functions, the answer-checking logic, and the screen-flow functions (`showRoundIntro`, `startRound`/`startLevel`, `resetGame`, `pause`/`resume`, `endGame`).
+Each game script is one IIFE with, in order: a `$(id)` shortcut, the `store` wrapper, a `beep()`-based Web Audio sound layer (no audio files — all SFX are synthesized oscillator tones, gathered in an `sfx` object), a content array that fully defines that game's questions (`ROUNDS` in the first two games, `LEVELS` + per-level `gen*()` generator functions in the fractions game — this is where to add or tweak questions), then game state (`score`, `lives`, `combo`, etc.), the render/`paintX()` functions, and the answer-checking logic.
 
-Screens are `<div class="overlay">` blocks toggled via a `hidden` class, always in the same order: Início (rules) → Rodada/Nível (per-round/level intro) → live gameplay → Pausa/Sair (pause/exit) → Fim (results). `endGame(won)` is the single place that computes the 0–3 star rating (based on lives remaining / how far the player got) and writes `mq_progress` — leaving via the exit button skips it entirely, which is why quitting mid-match doesn't save score or stars (only the persistent gas bank survives that).
+Screen flow differs slightly by game. Caça/Venn play as one continuous run: Início (rules) → Rodada intro → live gameplay → Pausa/Sair → Fim, with `endGame(won)` as the single place that computes the 0–3 star rating and writes `mq_progress` (leaving via the exit button skips it, so quitting mid-match doesn't save score or stars — only the gas bank survives that). Poções instead has an in-game level map between Início and gameplay (`showLevelMap`); each level is its own 3-lives/5-question session started by `startLevel()` and scored by `finishLevel(won)`, which writes per-level results to `mq_pocoes_niveis` and rolls their average into `mq_progress` via `syncOverallProgress()`.
 
 ### The gas economy (cross-file feature)
 
